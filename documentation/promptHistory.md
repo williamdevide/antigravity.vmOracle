@@ -249,6 +249,38 @@ nenhuma dessa mudanças apareceu na plataforma. confirme se esta sendo atualizad
 sim, prossiga
 ```
 
+---
+
+## Prompt #31 — 2026-11-10 10:03:40 (-03:00)
+
+```text
+williamdev@cloudshell:~ (sa-saopaulo-1)$ ssh ubuntu@147.15.2.73
+ubuntu@147.15.2.73: Permission denied (publickey).
+```
+
+---
+
+## Prompt #32 — 2026-11-10 10:14:08 (-03:00)
+
+```text
+executei o comando, mas agora não esta exibindo pagina nenhuma
+```
+
+---
+
+## Prompt #33 — 2026-11-10 10:59:48 (-03:00)
+
+```text
+/agente-orquestrador /grill-me /goal tentei publicar o projeto de um aluno e apresentou o seguinte erro:
+❌ Erro: [Errno 13] Permission denied: '/opt/antigravity-oracle/execution/deployed_projects.json'
+[Errno 13] Permission denied: '/opt/antigravity-oracle/execution/deployed_projects.json'
+
+considerando nossa urgencia criei uma pasta projeto aluno onde esta o link do repositorio, o script do bd e as variaveis de ambiente. faça esse projeto  funcionar e depois iremos melhorar nossa interface para que nos proximos projetos todos esses dados possam ser enviados diretamente por ela
+```
+
+
+
+
 
 
 

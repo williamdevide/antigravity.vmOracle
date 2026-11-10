@@ -63,7 +63,14 @@ if ! command -v php >/dev/null 2>&1; then
     bash "$ACO_DIR/execution/provision_php_stack.sh" || true
 fi
 
-# 7. Reiniciar servicos
+# 7. Reiniciar servicos e garantir permissao total para ubuntu
+echo "[+] Garantindo permissoes para usuario ubuntu em $ACO_DIR..."
+sudo chown -R ubuntu:ubuntu "$ACO_DIR"
+sudo chmod -R 775 "$ACO_DIR/execution"
+if [ -f "$ACO_DIR/execution/deployed_projects.json" ]; then
+    sudo chmod 664 "$ACO_DIR/execution/deployed_projects.json"
+fi
+
 echo "[+] Reiniciando servicos antigravity-dashboard e caddy..."
 sudo systemctl restart antigravity-dashboard || true
 sudo systemctl reload caddy || sudo systemctl restart caddy || true
