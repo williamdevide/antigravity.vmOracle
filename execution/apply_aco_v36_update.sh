@@ -45,10 +45,13 @@ sudo python3 -c '
 import json, os
 p = "/opt/antigravity-oracle/execution/deployed_projects.json"
 if os.path.exists(p):
-    data = json.load(open(p))
+    with open(p, "r") as f:
+        data = json.load(f)
     filtered = [x for x in data if x.get("slug") != "labware"]
-    json.dump(filtered, open(p, "w"), indent=2)
-    print(f"[+] deployed_projects.json limpo. Projetos ativos: {[x.get(\"slug\") for x in filtered]}")
+    with open(p, "w") as f:
+        json.dump(filtered, f, indent=2)
+    slugs = [x.get("slug") for x in filtered]
+    print("[+] deployed_projects.json limpo. Projetos ativos:", slugs)
 '
 
 # 4. Atualizar dependencias do Backend se necessario
@@ -77,3 +80,4 @@ echo " Acesse: https://147.15.2.73.sslip.io"
 echo " 📁 Arvore de Arquivos: no modal do projeto (aba 'Arquivos')"
 echo " 🗄️ Explorador de BD: na aba 'Bancos de Dados 1-Clique'"
 echo "=========================================================="
+
