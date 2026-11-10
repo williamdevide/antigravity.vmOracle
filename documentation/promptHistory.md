@@ -303,6 +303,15 @@ o endereço https://labware.147.15.2.73.sslip.io/ não exibe nada.
 e o endereço https://labwarenext.147.15.2.73.sslip.io/ ainda exibe Serviço temporariamente indisponível.
 ```
 
+---
+
+## Prompt #37 — 2026-11-10 11:32:04 (-03:00)
+
+```text
+otimo, agora apareceu a pagina, mas não carregou os dados de vagas que estavam no script
+```
+
+
 
 
 
