@@ -22,6 +22,7 @@ O **A.C.O. v3.5 (Antigravity Cloud Orchestrator — Coolify Edition)** é uma pl
 ### 🌐 Links Ao Vivo na VM (`147.15.2.73`)
 * 🖥️ **Painel Orquestrador A.C.O. (HTTPS):** [https://147.15.2.73.sslip.io](https://147.15.2.73.sslip.io)
 * 🏭 **Sistema Manu (Full-Stack SIG-Manu):** [https://manu.147.15.2.73.sslip.io](https://manu.147.15.2.73.sslip.io)
+* 🧪 **LabWareNext (PHP 8.3 + MariaDB + Cron):** [https://labware.147.15.2.73.sslip.io](https://labware.147.15.2.73.sslip.io)
 * 🚀 **Projeto Vitrine Publicado (HTTPS):** [https://demo.147.15.2.73.sslip.io](https://demo.147.15.2.73.sslip.io)
 * 🩺 **Health Check da API:** [https://147.15.2.73.sslip.io/api/health](https://147.15.2.73.sslip.io/api/health)
 
