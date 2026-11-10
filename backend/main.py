@@ -583,6 +583,41 @@ def deploy_new_project(req: DeployRequest, _admin: dict[str, Any] = Depends(veri
         return {"status": "error", "ok": False, "message": str(e), "log": str(e)}
 
 
+@app.get("/api/projects/{slug}/env")
+def get_project_env_endpoint(slug: str, _admin: dict[str, Any] = Depends(verify_admin_user)):
+    try:
+        data = deployer.get_project_env(slug)
+        return {"status": "success", "ok": True, **data}
+    except Exception as e:
+        return {"status": "error", "ok": False, "message": str(e), "envText": ""}
+
+
+@app.get("/api/projects/{slug}/files")
+def get_project_file_tree_endpoint(
+    slug: str,
+    path: str = "",
+    _admin: dict[str, Any] = Depends(verify_admin_user),
+):
+    try:
+        tree = deployer.get_project_file_tree(slug, relative_path=path)
+        return {"status": "success", "ok": True, **tree}
+    except Exception as e:
+        return {"status": "error", "ok": False, "message": str(e), "items": []}
+
+
+@app.get("/api/projects/{slug}/file-content")
+def get_project_file_content_endpoint(
+    slug: str,
+    path: str = "",
+    _admin: dict[str, Any] = Depends(verify_admin_user),
+):
+    try:
+        content = deployer.get_project_file_content(slug, relative_file_path=path)
+        return {"status": "success", "ok": True, **content}
+    except Exception as e:
+        return {"status": "error", "ok": False, "message": str(e), "content": ""}
+
+
 @app.get("/api/projects/{slug}/cron")
 def get_project_cron_endpoint(slug: str, _admin: dict[str, Any] = Depends(verify_admin_user)):
     try:
@@ -825,3 +860,47 @@ def inject_database_into_project(
         "project": updated,
         "injectedDatabase": db_slug,
     }
+
+
+# ================= ENDPOINTS DE EXPLORAÇÃO DE BANCO (ESTRUTURA E DADOS) =================
+
+
+@app.get("/api/databases/explorer/tables")
+def get_database_tables_endpoint(
+    db: str = "labw",
+    _admin: dict[str, Any] = Depends(verify_admin_user),
+):
+    try:
+        tables = db_mgr.list_database_tables(db)
+        return {"status": "success", "ok": True, "db": db, "tables": tables}
+    except Exception as e:
+        return {"status": "error", "ok": False, "message": str(e), "tables": []}
+
+
+@app.get("/api/databases/explorer/schema")
+def get_table_schema_endpoint(
+    table: str,
+    db: str = "labw",
+    _admin: dict[str, Any] = Depends(verify_admin_user),
+):
+    try:
+        schema = db_mgr.get_table_schema(db, table)
+        return {"status": "success", "ok": True, "db": db, "table": table, "schema": schema}
+    except Exception as e:
+        return {"status": "error", "ok": False, "message": str(e), "schema": []}
+
+
+@app.get("/api/databases/explorer/data")
+def get_table_data_endpoint(
+    table: str,
+    db: str = "labw",
+    limit: int = 50,
+    offset: int = 0,
+    _admin: dict[str, Any] = Depends(verify_admin_user),
+):
+    try:
+        data = db_mgr.get_table_data(db, table, limit=limit, offset=offset)
+        return {"status": "success", "ok": True, "db": db, "table": table, **data}
+    except Exception as e:
+        return {"status": "error", "ok": False, "message": str(e), "columns": [], "rows": [], "total": 0}
+

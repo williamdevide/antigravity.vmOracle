@@ -348,3 +348,133 @@ def delete_database(slug: str) -> dict[str, Any]:
     dbs = [d for d in dbs if d.get("slug") != clean]
     save_databases(dbs)
     return {"deleted": clean, "remaining": len(dbs)}
+
+
+# ==============================================================================
+# VISUALIZADOR DETERMINÍSTICO DE BANCO DE DADOS (ESTRUTURA E DADOS)
+# ==============================================================================
+
+
+def list_database_tables(db_name: str = "labw") -> list[dict[str, Any]]:
+    """Lista todas as tabelas de um banco MariaDB/MySQL com contagem de linhas e tamanho."""
+    clean_db = re.sub(r"[^a-zA-Z0-9_]", "", db_name.strip()) or "labw"
+    sql = f"""
+    SELECT 
+        table_name AS name,
+        COALESCE(table_rows, 0) AS estimated_rows,
+        COALESCE(data_length + index_length, 0) AS total_bytes
+    FROM information_schema.tables 
+    WHERE table_schema = '{clean_db}'
+    ORDER BY table_name ASC;
+    """
+    cmd = ["sudo", "mysql", "-e", sql, "-B"]
+    try:
+        res = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, timeout=10)
+        if res.returncode != 0:
+            return []
+        lines = res.stdout.strip().splitlines()
+        if not lines or len(lines) <= 1:
+            return []
+        tables = []
+        for line in lines[1:]:
+            parts = line.split("\t")
+            if len(parts) >= 3:
+                name = parts[0]
+                rows_val = int(parts[1]) if parts[1].isdigit() else 0
+                bytes_val = int(parts[2]) if parts[2].isdigit() else 0
+                tables.append({
+                    "name": name,
+                    "estimatedRows": rows_val,
+                    "totalBytes": bytes_val,
+                    "sizeFormatted": format_bytes_human(bytes_val),
+                })
+        return tables
+    except Exception:
+        return []
+
+
+def get_table_schema(db_name: str, table_name: str) -> list[dict[str, Any]]:
+    """Retorna as colunas, tipos de dados, chaves e defaults de uma tabela."""
+    clean_db = re.sub(r"[^a-zA-Z0-9_]", "", db_name.strip()) or "labw"
+    clean_table = re.sub(r"[^a-zA-Z0-9_]", "", table_name.strip())
+    if not clean_table:
+        return []
+
+    sql = f"SHOW FULL COLUMNS FROM `{clean_db}`.`{clean_table}`;"
+    cmd = ["sudo", "mysql", "-e", sql, "-B"]
+    try:
+        res = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, timeout=10)
+        if res.returncode != 0:
+            return []
+        lines = res.stdout.strip().splitlines()
+        if not lines or len(lines) <= 1:
+            return []
+        headers = lines[0].split("\t")
+        columns = []
+        for line in lines[1:]:
+            parts = line.split("\t")
+            col_data = dict(zip(headers, parts))
+            columns.append({
+                "field": col_data.get("Field", ""),
+                "type": col_data.get("Type", ""),
+                "null": col_data.get("Null", "YES"),
+                "key": col_data.get("Key", ""),
+                "default": col_data.get("Default", "NULL"),
+                "extra": col_data.get("Extra", ""),
+                "comment": col_data.get("Comment", ""),
+            })
+        return columns
+    except Exception:
+        return []
+
+
+def get_table_data(db_name: str, table_name: str, limit: int = 50, offset: int = 0) -> dict[str, Any]:
+    """Retorna os registros de uma tabela em formato JSON com paginacao."""
+    clean_db = re.sub(r"[^a-zA-Z0-9_]", "", db_name.strip()) or "labw"
+    clean_table = re.sub(r"[^a-zA-Z0-9_]", "", table_name.strip())
+    if not clean_table:
+        return {"columns": [], "rows": [], "total": 0}
+
+    safe_limit = max(1, min(int(limit), 200))
+    safe_offset = max(0, int(offset))
+
+    # 1. Total real de linhas
+    count_sql = f"SELECT COUNT(*) FROM `{clean_db}`.`{clean_table}`;"
+    total = 0
+    try:
+        c_res = subprocess.run(["sudo", "mysql", "-e", count_sql, "-sN"], stdout=subprocess.PIPE, text=True, timeout=5)
+        if c_res.stdout.strip().isdigit():
+            total = int(c_res.stdout.strip())
+    except Exception:
+        pass
+
+    # 2. Registros da tabela
+    data_sql = f"SELECT * FROM `{clean_db}`.`{clean_table}` LIMIT {safe_limit} OFFSET {safe_offset};"
+    cmd = ["sudo", "mysql", "-e", data_sql, "-B"]
+    try:
+        res = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, timeout=10)
+        if res.returncode != 0:
+            return {"columns": [], "rows": [], "total": total}
+        lines = res.stdout.strip().splitlines()
+        if not lines:
+            return {"columns": [], "rows": [], "total": total}
+        columns = lines[0].split("\t")
+        rows = []
+        for line in lines[1:]:
+            parts = line.split("\t")
+            # Truncar campos muito longos para performance
+            row_dict = {}
+            for col, val in zip(columns, parts):
+                row_dict[col] = (val[:300] + "...") if len(val) > 300 else val
+            rows.append(row_dict)
+
+        return {
+            "columns": columns,
+            "rows": rows,
+            "total": total,
+            "limit": safe_limit,
+            "offset": safe_offset,
+        }
+    except Exception:
+        return {"columns": [], "rows": [], "total": total}
+

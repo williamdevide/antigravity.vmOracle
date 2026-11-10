@@ -139,7 +139,7 @@ def get_aco_platform_telemetry() -> dict[str, Any]:
     return {
         "name": "A.C.O. Core Platform (Antigravity Cloud Orchestrator)",
         "slug": "aco-core",
-        "version": "v3.5.0",
+        "version": "v3.6.0",
         "deployDate": deploy_time_str,
         "url": f"https://{VM_IP}.sslip.io",
         "status": "ONLINE" if dash_tel["activeState"] == "active" else dash_tel["activeState"].upper(),
@@ -456,6 +456,25 @@ def parse_env_text(env_text: str) -> dict[str, str]:
     return result
 
 
+def safe_write_file(file_path: str, content: str, mode: str = "664") -> None:
+    """Escreve um arquivo de forma segura, com fallback para sudo caso haja PermissionError."""
+    try:
+        with open(file_path, "w", encoding="utf-8") as f:
+            f.write(content)
+    except PermissionError:
+        p = subprocess.run(
+            ["sudo", "tee", file_path],
+            input=content,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=10,
+        )
+        if p.returncode != 0:
+            raise RuntimeError(f"Falha ao escrever {file_path} via sudo: {p.stderr}")
+        subprocess.run(["sudo", "chmod", mode, file_path], check=False)
+
+
 def write_project_env_files(target_dir: str, env_text: str) -> str:
     """
     Escreve o arquivo .aco.env (para EnvironmentFile do systemd) e .env
@@ -466,20 +485,51 @@ def write_project_env_files(target_dir: str, env_text: str) -> str:
     systemd_lines = [f"{k}={v}" for k, v in env_dict.items()]
 
     aco_env_path = os.path.join(target_dir, ".aco.env")
-    with open(aco_env_path, "w", encoding="utf-8") as f:
-        f.write("\n".join(systemd_lines) + ("\n" if systemd_lines else ""))
+    safe_write_file(aco_env_path, "\n".join(systemd_lines) + ("\n" if systemd_lines else ""))
 
     if clean_lines:
         dot_env_content = "\n".join(clean_lines) + "\n"
-        with open(os.path.join(target_dir, ".env"), "w", encoding="utf-8") as f:
-            f.write(dot_env_content)
+        safe_write_file(os.path.join(target_dir, ".env"), dot_env_content)
         for sub in ("frontend", "backend", "server", "client"):
             sub_dir = os.path.join(target_dir, sub)
             if os.path.isdir(sub_dir):
-                with open(os.path.join(sub_dir, ".env"), "w", encoding="utf-8") as f:
-                    f.write(dot_env_content)
+                safe_write_file(os.path.join(sub_dir, ".env"), dot_env_content)
 
     return aco_env_path
+
+
+def get_project_env(slug: str) -> dict[str, Any]:
+    """Retorna o conteudo real do arquivo .env gravado no disco do projeto."""
+    clean_slug = sanitize_slug(slug)
+    projects = load_projects()
+    target = next((p for p in projects if p.get("slug") == clean_slug), None)
+
+    target_dir = os.path.join(PROJECTS_ROOT, clean_slug)
+    env_file = os.path.join(target_dir, ".env")
+    aco_env = os.path.join(target_dir, ".aco.env")
+
+    content = ""
+    file_found = None
+
+    for cand in (env_file, aco_env):
+        if os.path.exists(cand):
+            try:
+                with open(cand, "r", encoding="utf-8", errors="ignore") as f:
+                    content = f.read()
+                    file_found = cand
+                    break
+            except Exception:
+                pass
+
+    if not content and target:
+        content = target.get("envVarsText", "")
+
+    return {
+        "slug": clean_slug,
+        "envText": content,
+        "filePath": file_found or env_file,
+        "exists": file_found is not None,
+    }
 
 
 def build_authenticated_git_url(repo_url: str, github_token: str = "", custom_token: str = "") -> str:
@@ -525,33 +575,55 @@ ACO_CRON_LOG_DIR = "/var/log/aco-cron"
 def get_project_cron(slug: str) -> dict[str, Any]:
     """Consulta a configuracao de agendamento Cron e o log recente de execucao."""
     clean_slug = sanitize_slug(slug)
-    cron_file = os.path.join(ACO_CRON_DIR, f"aco-{clean_slug}")
+    cron_candidates = [
+        os.path.join(ACO_CRON_DIR, f"aco-{clean_slug}"),
+        os.path.join(ACO_CRON_DIR, f"aco-project-{clean_slug}"),
+    ]
     log_file = os.path.join(ACO_CRON_LOG_DIR, f"{clean_slug}.log")
 
     enabled = False
     schedule = "0 * * * *"
     command = ""
+    cron_file_found = None
 
-    if os.path.exists(cron_file):
-        try:
-            with open(cron_file, "r", encoding="utf-8") as f:
-                for line in f:
-                    line = line.strip()
-                    if not line or line.startswith("#") or line.startswith("PATH="):
-                        continue
-                    parts = line.split(maxsplit=6)
-                    if len(parts) >= 7 and parts[5] in ("ubuntu", "root", "www-data"):
-                        schedule = " ".join(parts[:5])
-                        raw_cmd = parts[6]
-                        if " >> " in raw_cmd:
-                            raw_cmd = raw_cmd.split(" >> ")[0]
-                        if " && " in raw_cmd:
-                            raw_cmd = raw_cmd.split(" && ", 1)[1]
-                        command = raw_cmd.strip()
-                        enabled = True
-                        break
-        except Exception:
-            pass
+    for cron_file in cron_candidates:
+        if os.path.exists(cron_file):
+            cron_file_found = cron_file
+            try:
+                with open(cron_file, "r", encoding="utf-8") as f:
+                    for line in f:
+                        line = line.strip()
+                        if not line or line.startswith("#") or line.startswith("PATH="):
+                            continue
+                        parts = line.split(maxsplit=6)
+                        if len(parts) >= 7:
+                            schedule = " ".join(parts[:5])
+                            raw_cmd = parts[6]
+                            if " >> " in raw_cmd:
+                                raw_cmd = raw_cmd.split(" >> ")[0]
+                            if " > " in raw_cmd:
+                                raw_cmd = raw_cmd.split(" > ")[0]
+                            if " && " in raw_cmd:
+                                raw_cmd = raw_cmd.split(" && ", 1)[1]
+                            command = raw_cmd.strip()
+                            enabled = True
+                            break
+            except Exception:
+                pass
+            if enabled:
+                break
+
+    # Fallback para dados persistidos no catalogo de projetos
+    if not command:
+        projects = load_projects()
+        target = next((p for p in projects if p.get("slug") == clean_slug), None)
+        if target:
+            if target.get("cronSchedule"):
+                schedule = target["cronSchedule"]
+                enabled = True
+            if target.get("cronCommand"):
+                command = target["cronCommand"]
+                enabled = True
 
     recent_logs = ""
     if os.path.exists(log_file):
@@ -569,10 +641,108 @@ def get_project_cron(slug: str) -> dict[str, Any]:
         "enabled": enabled,
         "schedule": schedule,
         "command": command,
-        "cronFilePath": cron_file,
+        "cronFilePath": cron_file_found or os.path.join(ACO_CRON_DIR, f"aco-{clean_slug}"),
         "logFilePath": log_file,
         "recentLogs": recent_logs,
     }
+
+
+def get_project_file_tree(slug: str, relative_path: str = "") -> dict[str, Any]:
+    """Retorna a arvore de arquivos e diretorios de um projeto publicado para navegacao visual."""
+    clean_slug = sanitize_slug(slug)
+    project_root = os.path.join(PROJECTS_ROOT, clean_slug)
+
+    if not os.path.isdir(project_root):
+        raise ValueError(f"Diretorio do projeto '{clean_slug}' nao encontrado.")
+
+    # Impedir path traversal (../)
+    safe_relative = relative_path.strip().lstrip("/\\")
+    target_dir = os.path.abspath(os.path.join(project_root, safe_relative))
+
+    if not target_dir.startswith(os.path.abspath(project_root)):
+        raise ValueError("Acesso negado fora do diretorio raiz do projeto.")
+
+    if not os.path.exists(target_dir):
+        raise ValueError(f"Caminho '{safe_relative}' nao encontrado.")
+
+    items = []
+    try:
+        with os.scandir(target_dir) as entries:
+            for entry in entries:
+                if entry.name == ".git":
+                    continue
+                is_dir = entry.is_dir(follow_symlinks=False)
+                entry_stat = entry.stat(follow_symlinks=False)
+                size_bytes = entry_stat.st_size if not is_dir else 0
+                rel = os.path.relpath(entry.path, project_root).replace("\\", "/")
+                ext = os.path.splitext(entry.name)[1].lower().lstrip(".")
+
+                items.append({
+                    "name": entry.name,
+                    "relativePath": rel,
+                    "isDirectory": is_dir,
+                    "type": "directory" if is_dir else "file",
+                    "extension": ext,
+                    "sizeBytes": size_bytes,
+                    "sizeFormatted": format_bytes_human(size_bytes) if not is_dir else "--",
+                    "modifiedAt": datetime.datetime.fromtimestamp(entry_stat.st_mtime).strftime("%d/%m/%Y %H:%M:%S"),
+                })
+    except Exception as e:
+        raise RuntimeError(f"Erro ao ler diretorio do projeto: {e}") from e
+
+    # Ordenar: diretorios primeiro, depois arquivos alfabeticamente
+    items.sort(key=lambda x: (not x["isDirectory"], x["name"].lower()))
+
+    current_rel = os.path.relpath(target_dir, project_root).replace("\\", "/")
+    if current_rel == ".":
+        current_rel = ""
+
+    return {
+        "slug": clean_slug,
+        "currentPath": current_rel,
+        "items": items,
+        "totalItems": len(items),
+    }
+
+
+def get_project_file_content(slug: str, relative_file_path: str) -> dict[str, Any]:
+    """Retorna o conteudo de texto de um arquivo de projeto (max 512 KB)."""
+    clean_slug = sanitize_slug(slug)
+    project_root = os.path.join(PROJECTS_ROOT, clean_slug)
+
+    safe_relative = relative_file_path.strip().lstrip("/\\")
+    file_path = os.path.abspath(os.path.join(project_root, safe_relative))
+
+    if not file_path.startswith(os.path.abspath(project_root)):
+        raise ValueError("Acesso negado fora do diretorio do projeto.")
+
+    if not os.path.isfile(file_path):
+        raise ValueError(f"Arquivo '{safe_relative}' nao encontrado.")
+
+    size = os.path.getsize(file_path)
+    if size > 1024 * 512:
+        return {
+            "slug": clean_slug,
+            "relativePath": safe_relative,
+            "sizeBytes": size,
+            "sizeFormatted": format_bytes_human(size),
+            "content": f"[Aviso: Arquivo grande ({format_bytes_human(size)}). Visualizacao limitada.]",
+            "isTruncated": True,
+        }
+
+    try:
+        with open(file_path, "r", encoding="utf-8", errors="replace") as f:
+            content = f.read()
+        return {
+            "slug": clean_slug,
+            "relativePath": safe_relative,
+            "sizeBytes": size,
+            "sizeFormatted": format_bytes_human(size),
+            "content": content,
+            "isTruncated": False,
+        }
+    except Exception as e:
+        raise RuntimeError(f"Erro ao ler arquivo: {e}") from e
 
 
 def update_project_cron(slug: str, schedule: str, command: str, enabled: bool) -> dict[str, Any]:
@@ -1399,11 +1569,12 @@ def check_and_autodeploy_all(github_token: str = "") -> list[dict[str, Any]]:
 
 
 def remove_project(slug: str) -> dict[str, Any]:
-    """Remove um projeto publicado, encerra seu servico systemd e limpa a rota no Caddy."""
+    """Remove um projeto publicado, encerra seu servico systemd e limpa a rota no Caddy com sudo."""
     clean_slug = sanitize_slug(slug)
     projects = load_projects()
     service_name = f"app-{clean_slug}"
 
+    # 1. Parar e remover servico systemd se existir
     try:
         run_cmd(["sudo", "systemctl", "stop", service_name])
         run_cmd(["sudo", "rm", "-f", f"/etc/systemd/system/{service_name}.service"])
@@ -1411,18 +1582,28 @@ def remove_project(slug: str) -> dict[str, Any]:
     except Exception:
         pass
 
+    # 2. Remover arquivo de rota Caddy com sudo
     caddy_file = os.path.join(CADDY_SITES_DIR, f"{clean_slug}.caddy")
-    if os.path.exists(caddy_file):
-        os.remove(caddy_file)
     try:
+        subprocess.run(["sudo", "rm", "-f", caddy_file], check=False)
+        subprocess.run(["sudo", "rm", "-f", f"{caddy_file}.disabled"], check=False)
         run_cmd(["sudo", "systemctl", "reload", "caddy"])
     except Exception:
         pass
 
+    # 3. Remover tarefas Cron associadas
+    for cf in (
+        os.path.join(ACO_CRON_DIR, f"aco-{clean_slug}"),
+        os.path.join(ACO_CRON_DIR, f"aco-project-{clean_slug}"),
+    ):
+        subprocess.run(["sudo", "rm", "-f", cf], check=False)
+
+    # 4. Remover diretorio do projeto com sudo
     target_dir = os.path.join(PROJECTS_ROOT, clean_slug)
     if os.path.exists(target_dir):
-        shutil.rmtree(target_dir, ignore_errors=True)
+        subprocess.run(["sudo", "rm", "-rf", target_dir], check=False)
 
+    # 5. Salvar lista limpa no deployed_projects.json
     projects = [p for p in projects if p.get("slug") != clean_slug]
     save_projects(projects)
     return {"removed": clean_slug, "remaining": len(projects)}

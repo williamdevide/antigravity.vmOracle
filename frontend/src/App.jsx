@@ -6,7 +6,7 @@ import {
   Github, Search, Lock, LogOut, UserCheck, Edit3, Check, X,
   Database, Layers, Settings, FileText, GitCommit, GitBranch,
   Key, Copy, ArrowLeft, Sparkles, Eye, EyeOff, RotateCcw, Box,
-  ChevronRight, ArrowUpRight
+  ChevronRight, ArrowUpRight, Save, Folder, Table, FileCode, ChevronDown
 } from 'lucide-react';
 import { auth, loginWithGoogle, logoutGoogle, ALLOWED_EMAIL } from './firebase';
 import { onAuthStateChanged } from 'firebase/auth';
@@ -73,6 +73,22 @@ export default function App() {
   const [savingCron, setSavingCron] = useState(false);
   const [runningCron, setRunningCron] = useState(false);
   const [cronMsg, setCronMsg] = useState(null);
+
+  // File Tree Explorer
+  const [filesPath, setFilesPath] = useState('');
+  const [filesList, setFilesList] = useState([]);
+  const [loadingFiles, setLoadingFiles] = useState(false);
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [loadingFileContent, setLoadingFileContent] = useState(false);
+
+  // Database Explorer (Estrutura e Dados)
+  const [selectedDbName, setSelectedDbName] = useState('labw');
+  const [dbTables, setDbTables] = useState([]);
+  const [selectedTable, setSelectedTable] = useState('vaga');
+  const [tableSchema, setTableSchema] = useState([]);
+  const [tableData, setTableData] = useState({ columns: [], rows: [], total: 0 });
+  const [dbExplorerTab, setDbExplorerTab] = useState('data'); // 'data' | 'schema'
+  const [loadingDbExplorer, setLoadingDbExplorer] = useState(false);
 
   // GitHub Repos
   const [ghRepos, setGhRepos] = useState([]);
@@ -230,6 +246,115 @@ export default function App() {
       fetchProjectCron(activeProjectSlug);
     }
   }, [activeProjectSlug, projectTab, fetchProjectCron]);
+
+  // Busca real do arquivo .env no disco
+  const fetchProjectRealEnv = useCallback(async (slug) => {
+    if (!slug) return;
+    try {
+      const res = await authFetch(`/api/projects/${slug}/env`);
+      const json = await res.json();
+      if (json.envText) {
+        setEnvEditorText(json.envText);
+      }
+    } catch (err) {
+      console.error('Erro ao buscar .env do disco:', err);
+    }
+  }, [authFetch]);
+
+  useEffect(() => {
+    if (activeProjectSlug && projectTab === 'env') {
+      fetchProjectRealEnv(activeProjectSlug);
+    }
+  }, [activeProjectSlug, projectTab, fetchProjectRealEnv]);
+
+  // Explorador de Arquivos do Projeto (File Tree)
+  const fetchProjectFiles = useCallback(async (slug, path = '') => {
+    if (!slug) return;
+    try {
+      setLoadingFiles(true);
+      const res = await authFetch(`/api/projects/${slug}/files?path=${encodeURIComponent(path)}`);
+      const json = await res.json();
+      setFilesList(json.items || []);
+      setFilesPath(json.currentPath || '');
+    } catch (err) {
+      console.error('Erro ao listar arquivos:', err);
+    } finally {
+      setLoadingFiles(false);
+    }
+  }, [authFetch]);
+
+  const fetchFileContent = useCallback(async (slug, filePath) => {
+    if (!slug || !filePath) return;
+    try {
+      setLoadingFileContent(true);
+      const res = await authFetch(`/api/projects/${slug}/file-content?path=${encodeURIComponent(filePath)}`);
+      const json = await res.json();
+      setSelectedFile(json);
+    } catch (err) {
+      console.error('Erro ao ler conteudo do arquivo:', err);
+    } finally {
+      setLoadingFileContent(false);
+    }
+  }, [authFetch]);
+
+  useEffect(() => {
+    if (activeProjectSlug && projectTab === 'files') {
+      fetchProjectFiles(activeProjectSlug, filesPath);
+    }
+  }, [activeProjectSlug, projectTab, filesPath, fetchProjectFiles]);
+
+  // Explorador de Banco de Dados (Estrutura e Dados)
+  const fetchDbTables = useCallback(async (dbName = 'labw') => {
+    try {
+      setLoadingDbExplorer(true);
+      const res = await authFetch(`/api/databases/explorer/tables?db=${encodeURIComponent(dbName)}`);
+      const json = await res.json();
+      const tbls = json.tables || [];
+      setDbTables(tbls);
+      if (tbls.length > 0 && (!selectedTable || !tbls.some(t => t.name === selectedTable))) {
+        setSelectedTable(tbls[0].name);
+      }
+    } catch (err) {
+      console.error('Erro ao buscar tabelas do banco:', err);
+    } finally {
+      setLoadingDbExplorer(false);
+    }
+  }, [authFetch, selectedTable]);
+
+  const fetchTableDetails = useCallback(async (dbName = 'labw', tableName = '') => {
+    if (!tableName) return;
+    try {
+      setLoadingDbExplorer(true);
+      const [resSchema, resData] = await Promise.all([
+        authFetch(`/api/databases/explorer/schema?db=${encodeURIComponent(dbName)}&table=${encodeURIComponent(tableName)}`),
+        authFetch(`/api/databases/explorer/data?db=${encodeURIComponent(dbName)}&table=${encodeURIComponent(tableName)}&limit=50&offset=0`)
+      ]);
+      const jsonSchema = await resSchema.json();
+      const jsonData = await resData.json();
+      setTableSchema(jsonSchema.schema || []);
+      setTableData({
+        columns: jsonData.columns || [],
+        rows: jsonData.rows || [],
+        total: jsonData.total || 0
+      });
+    } catch (err) {
+      console.error('Erro ao buscar dados da tabela:', err);
+    } finally {
+      setLoadingDbExplorer(false);
+    }
+  }, [authFetch]);
+
+  useEffect(() => {
+    if (activeNav === 'databases') {
+      fetchDbTables(selectedDbName);
+    }
+  }, [activeNav, selectedDbName, fetchDbTables]);
+
+  useEffect(() => {
+    if (activeNav === 'databases' && selectedTable) {
+      fetchTableDetails(selectedDbName, selectedTable);
+    }
+  }, [activeNav, selectedDbName, selectedTable, fetchTableDetails]);
 
   const handleSaveCron = async () => {
     if (!activeProjectSlug) return;
@@ -1337,6 +1462,189 @@ export default function App() {
                 ))
               )}
             </div>
+
+            {/* SEÇÃO: INSPETOR VISUAL DE BANCO DE DADOS (ESTRUTURA E DADOS) */}
+            <div className="lg:col-span-12 bg-slate-900/80 border border-slate-800 rounded-2xl p-5 sm:p-6 space-y-4">
+              <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-800">
+                <div className="flex items-center gap-2.5">
+                  <div className="p-2 rounded-xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-400">
+                    <Table className="w-5 h-5 shrink-0" />
+                  </div>
+                  <div>
+                    <h2 className="text-base font-bold text-white flex items-center gap-2">
+                      <span>Explorador de Banco de Dados</span>
+                      <span className="text-[10px] font-mono font-normal px-2 py-0.5 rounded-full bg-cyan-500/15 text-cyan-300 border border-cyan-500/30">
+                        MariaDB: {selectedDbName}
+                      </span>
+                    </h2>
+                    <p className="text-xs text-slate-400">Inspeção visual direta de estrutura (colunas/chaves) e dados reais das tabelas.</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <select
+                    value={selectedDbName}
+                    onChange={(e) => setSelectedDbName(e.target.value)}
+                    className="bg-slate-950 border border-slate-800 rounded-xl px-3 py-1.5 text-xs text-white font-mono"
+                  >
+                    <option value="labw">🐬 labw (MariaDB Principal)</option>
+                    {databases.filter(d => d.engine === 'mysql').map(d => (
+                      <option key={d.slug} value={d.dbName}>{d.name} ({d.dbName})</option>
+                    ))}
+                  </select>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      fetchDbTables(selectedDbName);
+                      if (selectedTable) fetchTableDetails(selectedDbName, selectedTable);
+                    }}
+                    className="p-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white"
+                    title="Recarregar dados"
+                  >
+                    <RefreshCw className={`w-3.5 h-3.5 ${loadingDbExplorer ? 'animate-spin text-cyan-400' : ''}`} />
+                  </button>
+                </div>
+              </div>
+
+              {/* Grid: Tabelas à esquerda + Visualização à direita */}
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+                {/* Lista de Tabelas */}
+                <div className="lg:col-span-3 space-y-1 bg-slate-950/60 p-2.5 rounded-xl border border-slate-800/80 max-h-96 overflow-y-auto">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 px-2 block mb-2">
+                    Tabelas ({dbTables.length})
+                  </span>
+                  {dbTables.length === 0 ? (
+                    <p className="text-xs text-slate-500 p-2">Nenhuma tabela encontrada no banco {selectedDbName}.</p>
+                  ) : (
+                    dbTables.map((tbl) => (
+                      <button
+                        key={tbl.name}
+                        type="button"
+                        onClick={() => setSelectedTable(tbl.name)}
+                        className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs transition cursor-pointer text-left ${
+                          selectedTable === tbl.name
+                            ? 'bg-cyan-500/20 text-cyan-300 font-semibold border border-cyan-500/30'
+                            : 'hover:bg-slate-800 text-slate-300'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2 truncate">
+                          <Table className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                          <span className="truncate">{tbl.name}</span>
+                        </div>
+                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-800 font-mono text-slate-400 shrink-0 ml-1">
+                          {tbl.estimatedRows}
+                        </span>
+                      </button>
+                    ))
+                  )}
+                </div>
+
+                {/* Painel de Dados / Estrutura da Tabela Selecionada */}
+                <div className="lg:col-span-9 bg-slate-950/80 border border-slate-800 rounded-xl overflow-hidden flex flex-col h-96">
+                  {/* Topo da Tabela: Nome + Abas de Modo */}
+                  <div className="p-3 bg-slate-900/90 border-b border-slate-800 flex flex-wrap items-center justify-between gap-2 shrink-0">
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono text-xs font-bold text-white">Tabela: `{selectedTable}`</span>
+                      <span className="text-[10px] text-slate-400 font-mono">({tableData.total} registros)</span>
+                    </div>
+
+                    <div className="flex items-center gap-1 bg-slate-950 p-0.5 rounded-lg border border-slate-800 text-xs">
+                      <button
+                        type="button"
+                        onClick={() => setDbExplorerTab('data')}
+                        className={`px-2.5 py-1 rounded-md transition cursor-pointer ${
+                          dbExplorerTab === 'data'
+                            ? 'bg-cyan-500 text-slate-950 font-bold'
+                            : 'text-slate-400 hover:text-slate-200'
+                        }`}
+                      >
+                        Dados ({tableData.rows.length})
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setDbExplorerTab('schema')}
+                        className={`px-2.5 py-1 rounded-md transition cursor-pointer ${
+                          dbExplorerTab === 'schema'
+                            ? 'bg-cyan-500 text-slate-950 font-bold'
+                            : 'text-slate-400 hover:text-slate-200'
+                        }`}
+                      >
+                        Estrutura ({tableSchema.length} colunas)
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Conteúdo da Tabela */}
+                  <div className="flex-1 overflow-auto p-2 text-xs font-mono">
+                    {loadingDbExplorer ? (
+                      <div className="h-full flex flex-col items-center justify-center text-slate-400 gap-2">
+                        <RefreshCw className="w-5 h-5 animate-spin text-cyan-400" />
+                        <span>Consultando MariaDB...</span>
+                      </div>
+                    ) : dbExplorerTab === 'data' ? (
+                      tableData.columns.length === 0 ? (
+                        <div className="h-full flex items-center justify-center text-slate-500">
+                          Tabela vazia ou sem dados para exibir.
+                        </div>
+                      ) : (
+                        <table className="w-full text-left border-collapse">
+                          <thead>
+                            <tr className="border-b border-slate-800 bg-slate-900/90 text-[11px] text-cyan-300">
+                              {tableData.columns.map((c) => (
+                                <th key={c} className="p-2 whitespace-nowrap font-semibold border-r border-slate-800/60 last:border-0">
+                                  {c}
+                                </th>
+                              ))}
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {tableData.rows.map((row, idx) => (
+                              <tr key={idx} className="border-b border-slate-800/40 hover:bg-slate-800/40 transition">
+                                {tableData.columns.map((c) => (
+                                  <td key={c} className="p-2 whitespace-nowrap text-slate-300 max-w-xs truncate border-r border-slate-800/40 last:border-0" title={row[c] || ''}>
+                                    {row[c] === null || row[c] === undefined ? <span className="text-slate-600 italic">NULL</span> : row[c]}
+                                  </td>
+                                ))}
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      )
+                    ) : (
+                      /* Modo: Estrutura (Schema) */
+                      <table className="w-full text-left border-collapse">
+                        <thead>
+                          <tr className="border-b border-slate-800 bg-slate-900/90 text-[11px] text-cyan-300">
+                            <th className="p-2 font-semibold">Coluna (Field)</th>
+                            <th className="p-2 font-semibold">Tipo (Type)</th>
+                            <th className="p-2 font-semibold">Nulo (Null)</th>
+                            <th className="p-2 font-semibold">Chave (Key)</th>
+                            <th className="p-2 font-semibold">Padrão (Default)</th>
+                            <th className="p-2 font-semibold">Extra</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {tableSchema.map((col) => (
+                            <tr key={col.field} className="border-b border-slate-800/40 hover:bg-slate-800/40 transition">
+                              <td className="p-2 font-bold text-white flex items-center gap-1.5">
+                                {col.key === 'PRI' && <span className="text-[9px] bg-amber-500/20 text-amber-300 px-1 rounded border border-amber-500/30">PK</span>}
+                                {col.field}
+                              </td>
+                              <td className="p-2 text-cyan-300">{col.type}</td>
+                              <td className="p-2 text-slate-400">{col.null}</td>
+                              <td className="p-2 text-indigo-300">{col.key || '-'}</td>
+                              <td className="p-2 text-slate-400">{col.default}</td>
+                              <td className="p-2 text-slate-500 text-[10px]">{col.extra || '-'}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         )}
 
@@ -1996,6 +2304,17 @@ export default function App() {
               >
                 <Clock className="w-3.5 h-3.5 text-cyan-400 shrink-0" /> Cron / Agendamentos
               </button>
+
+              <button
+                onClick={() => setProjectTab('files')}
+                className={`px-3 py-2 rounded-t-xl text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer border-b-2 whitespace-nowrap ${
+                  projectTab === 'files'
+                    ? 'border-cyan-400 text-cyan-300 bg-slate-900'
+                    : 'border-transparent text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                <FolderGit2 className="w-3.5 h-3.5 text-yellow-400 shrink-0" /> Árvore de Arquivos
+              </button>
             </div>
 
             {/* Conteúdo da Aba */}
@@ -2432,6 +2751,158 @@ export default function App() {
                         <pre className="bg-slate-900/90 text-emerald-400 font-mono text-[11px] p-2.5 rounded-lg overflow-x-auto max-h-56 overflow-y-auto leading-relaxed whitespace-pre-wrap">
                           {loadingCron ? 'Carregando logs do cron...' : projectCron.recentLogs || 'Sem registros de execução ainda.'}
                         </pre>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* ABA 6: ÁRVORE DE ARQUIVOS (FILE TREE EXPLORER) */}
+              {projectTab === 'files' && (
+                <div className="bg-slate-950/80 border border-slate-800 rounded-xl p-4 sm:p-5 space-y-4">
+                  {/* Barra de Navegação do Caminho */}
+                  <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-800">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <FolderGit2 className="w-4 h-4 text-yellow-400 shrink-0" />
+                      <span className="text-xs font-bold text-white">Navegador de Arquivos:</span>
+                      <div className="flex items-center gap-1 font-mono text-xs text-cyan-300 bg-slate-900 px-2.5 py-1 rounded-lg border border-slate-800 truncate">
+                        <button
+                          type="button"
+                          onClick={() => { setFilesPath(''); setSelectedFile(null); }}
+                          className="hover:text-white hover:underline cursor-pointer"
+                        >
+                          /{activeProject.slug}
+                        </button>
+                        {filesPath && (
+                          <>
+                            <span className="text-slate-500">/</span>
+                            <span className="text-amber-300 truncate">{filesPath}</span>
+                          </>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 shrink-0">
+                      {filesPath && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const parts = filesPath.split('/');
+                            parts.pop();
+                            setFilesPath(parts.join('/'));
+                            setSelectedFile(null);
+                          }}
+                          className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs text-slate-200 flex items-center gap-1 cursor-pointer"
+                        >
+                          <ArrowLeft className="w-3.5 h-3.5" /> Subir Pasta (..)
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => fetchProjectFiles(activeProject.slug, filesPath)}
+                        className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white"
+                        title="Atualizar pasta"
+                      >
+                        <RefreshCw className={`w-3.5 h-3.5 ${loadingFiles ? 'animate-spin text-cyan-400' : ''}`} />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Grid: Lista de Arquivos à Esquerda + Pré-visualização à Direita */}
+                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+                    {/* Lista de Pastas e Arquivos */}
+                    <div className="lg:col-span-5 bg-slate-900/70 border border-slate-800 rounded-xl overflow-hidden flex flex-col h-96">
+                      <div className="p-2.5 bg-slate-950/60 border-b border-slate-800 text-[11px] font-semibold text-slate-400 flex items-center justify-between">
+                        <span>Nome</span>
+                        <span>Tamanho</span>
+                      </div>
+                      <div className="p-1 overflow-y-auto flex-1 space-y-0.5">
+                        {loadingFiles ? (
+                          <div className="p-8 text-center text-xs text-slate-400 flex flex-col items-center gap-2">
+                            <RefreshCw className="w-4 h-4 animate-spin text-cyan-400" />
+                            <span>Lendo diretório...</span>
+                          </div>
+                        ) : filesList.length === 0 ? (
+                          <div className="p-8 text-center text-xs text-slate-500">Esta pasta está vazia.</div>
+                        ) : (
+                          filesList.map((item) => (
+                            <button
+                              key={item.relativePath}
+                              type="button"
+                              onClick={() => {
+                                if (item.isDirectory) {
+                                  setFilesPath(item.relativePath);
+                                  setSelectedFile(null);
+                                } else {
+                                  fetchFileContent(activeProject.slug, item.relativePath);
+                                }
+                              }}
+                              className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs transition cursor-pointer text-left ${
+                                selectedFile?.relativePath === item.relativePath
+                                  ? 'bg-cyan-500/20 text-cyan-300 font-semibold border border-cyan-500/30'
+                                  : 'hover:bg-slate-800/80 text-slate-300'
+                              }`}
+                            >
+                              <div className="flex items-center gap-2 min-w-0">
+                                {item.isDirectory ? (
+                                  <Folder className="w-3.5 h-3.5 text-yellow-400 shrink-0 fill-yellow-400/20" />
+                                ) : item.extension === 'php' ? (
+                                  <FileCode className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
+                                ) : item.name.startsWith('.env') ? (
+                                  <Key className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                                ) : (
+                                  <FileText className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                                )}
+                                <span className="truncate">{item.name}</span>
+                              </div>
+                              <span className="font-mono text-[10px] text-slate-500 shrink-0 ml-2">
+                                {item.sizeFormatted}
+                              </span>
+                            </button>
+                          ))
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Visualizador de Conteúdo do Arquivo */}
+                    <div className="lg:col-span-7 bg-slate-900/70 border border-slate-800 rounded-xl overflow-hidden flex flex-col h-96">
+                      <div className="p-2.5 bg-slate-950/60 border-b border-slate-800 flex items-center justify-between text-xs">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <Code2 className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+                          <span className="font-mono text-slate-300 truncate font-semibold">
+                            {selectedFile ? selectedFile.relativePath : 'Nenhum arquivo selecionado'}
+                          </span>
+                          {selectedFile && (
+                            <span className="text-[10px] text-slate-500 font-mono">({selectedFile.sizeFormatted})</span>
+                          )}
+                        </div>
+                        {selectedFile?.content && (
+                          <button
+                            type="button"
+                            onClick={() => copyToClipboard(selectedFile.content, selectedFile.relativePath)}
+                            className="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-[10px] text-cyan-300 flex items-center gap-1 cursor-pointer shrink-0"
+                          >
+                            <Copy className="w-3 h-3" /> Copiar
+                          </button>
+                        )}
+                      </div>
+
+                      <div className="p-3 overflow-y-auto flex-1 font-mono text-xs bg-slate-950 leading-relaxed">
+                        {loadingFileContent ? (
+                          <div className="h-full flex items-center justify-center text-slate-400 gap-2">
+                            <RefreshCw className="w-4 h-4 animate-spin text-cyan-400" />
+                            <span>Carregando arquivo...</span>
+                          </div>
+                        ) : selectedFile ? (
+                          <pre className="text-slate-200 whitespace-pre-wrap selection:bg-cyan-500/30">
+                            {selectedFile.content}
+                          </pre>
+                        ) : (
+                          <div className="h-full flex flex-col items-center justify-center text-slate-500 gap-1.5">
+                            <FileText className="w-6 h-6 stroke-1 text-slate-600" />
+                            <p className="text-xs">Selecione um arquivo à esquerda para visualizar seu código.</p>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
