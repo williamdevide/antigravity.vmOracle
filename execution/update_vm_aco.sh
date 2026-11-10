@@ -40,6 +40,9 @@ fi
 # 4. Compilar o Frontend React (Vite)
 echo "[+] Compilando Frontend React v3.5.0..."
 cd "$ACO_DIR/frontend"
+if [ -f "$ACO_DIR/.env" ]; then
+    grep "^VITE_" "$ACO_DIR/.env" > "$ACO_DIR/frontend/.env" 2>/dev/null || true
+fi
 npm install --silent
 npm run build
 
