@@ -27,6 +27,12 @@ PROJECTS_ROOT = "/var/www/projects"
 CADDY_SITES_DIR = "/etc/caddy/sites.d"
 VM_IP = os.environ.get("OCI_VM_IP", "147.15.2.73")
 
+# Previne qualquer erro de dubious ownership no Git para o sistema todo
+try:
+    subprocess.run(["git", "config", "--global", "--add", "safe.directory", "*"], check=False)
+except Exception:
+    pass
+
 
 def sanitize_slug(raw_slug: str) -> str:
     """Converte o nome do subdominio para formato DNS seguro."""
@@ -422,13 +428,21 @@ def allocate_port(projects: list[dict[str, Any]], existing_slug: str | None = No
 def run_cmd(cmd: list[str] | str, cwd: str | None = None, env: dict | None = None, timeout: int = 300) -> str:
     """Executa um comando de sistema e retorna stdout+stderr combinados."""
     merged_env = os.environ.copy()
+    merged_env["GIT_CONFIG_PARAMETERS"] = "'safe.directory=*'"
     if env:
         merged_env.update(env)
+
+    effective_cmd = cmd
+    if isinstance(cmd, list) and cmd and cmd[0] == "git" and "-c" not in cmd:
+        effective_cmd = ["git", "-c", "safe.directory=*"] + cmd[1:]
+    elif isinstance(cmd, str) and cmd.strip().startswith("git ") and "safe.directory" not in cmd:
+        effective_cmd = "git -c safe.directory=* " + cmd.strip()[4:]
+
     proc = subprocess.run(
-        cmd,
+        effective_cmd,
         cwd=cwd,
         env=merged_env,
-        shell=isinstance(cmd, str),
+        shell=isinstance(effective_cmd, str),
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
         text=True,

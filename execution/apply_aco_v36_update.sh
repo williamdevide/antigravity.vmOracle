@@ -34,6 +34,12 @@ sudo chown -R www-data:ubuntu /var/www/projects
 sudo chmod -R 775 /var/www/projects
 sudo find /var/www/projects -type d -exec chmod 775 {} + || true
 
+# Configurar safe.directory no Git para evitar erro de dubious ownership nos deploys
+echo "[+] Configurando git safe.directory para repositorios de projetos..."
+sudo git config --system --add safe.directory "*" || true
+git config --global --add safe.directory "*" || true
+sudo -u www-data git config --global --add safe.directory "*" || true
+
 # 3. Remover definitivamente os resquicios do projeto labware excluido
 echo "[+] Limpando arquivos e rotas do projeto labware removido..."
 sudo rm -f /etc/caddy/sites.d/labware.caddy /etc/caddy/sites.d/labware.caddy.disabled || true

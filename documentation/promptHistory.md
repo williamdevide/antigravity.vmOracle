@@ -381,6 +381,15 @@ Warning: Identity file /home/ubuntu/.ssh/oracle_vm.key not accessible: No such f
 ubuntu@147.15.2.73: Permission denied (publickey).
 ```
 
+---
+
+## Prompt #44 — 2026-11-10 17:14:31 (-03:00)
+
+```text
+tentei fazer o deploy para atualizar a versão do projeto do aluno, mas deu o seguinte erro: Falha no deploy: Comando falhou (exit 128): fatal: detected dubious ownership in repository at '/var/www/projects/labwarenext' To add an exception for this directory, call: git config --global --add safe.directory /var/www/projects/labwarenext
+```
+
+
 
 
 

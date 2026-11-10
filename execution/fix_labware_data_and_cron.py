@@ -271,6 +271,10 @@ def main():
     fix_script_js_resilience()
     setup_cron_schedule()
     
+    # Configurar safe.directory no Git para evitar erro de dubious ownership nos deploys
+    subprocess.run(["sudo", "git", "config", "--system", "--add", "safe.directory", "*"], check=False)
+    subprocess.run(["git", "config", "--global", "--add", "safe.directory", "*"], check=False)
+
     # Ajustar permissoes do projeto
     subprocess.run(["sudo", "chown", "-R", "www-data:ubuntu", PROJECT_DIR], check=False)
     subprocess.run(["sudo", "chmod", "-R", "775", PROJECT_DIR], check=False)
@@ -283,3 +287,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
