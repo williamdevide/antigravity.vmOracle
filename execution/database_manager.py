@@ -113,7 +113,7 @@ def load_databases() -> list[dict[str, Any]]:
     if not os.path.exists(DB_REGISTRY_PATH):
         return []
     try:
-        with open(DB_REGISTRY_PATH, "r", encoding="utf-8") as f:
+        with open(DB_REGISTRY_PATH, "r", encoding="utf-8-sig") as f:
             dbs = json.load(f)
             if not isinstance(dbs, list):
                 return []

@@ -962,16 +962,16 @@ export default function App() {
   const renderProjectDetails = (activeProject) => {
     if (!activeProject) return null;
     return (
-      <div className="border-t border-slate-800 bg-slate-950/70 p-4 sm:p-5 space-y-4 animate-in fade-in duration-150">
+      <div className="border-t border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/70 p-4 sm:p-5 space-y-4 animate-in fade-in duration-150">
         {/* Abas de Navegação do Projeto (Textos Concisos & Design Clean) */}
-        <div className="flex items-center gap-1.5 pb-2.5 border-b border-slate-800 bg-slate-950/40 overflow-x-auto">
+        <div className="flex items-center gap-1.5 pb-2.5 border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/40 overflow-x-auto">
           <button
             type="button"
             onClick={() => setProjectTab('controls')}
             className={`px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer whitespace-nowrap ${
               projectTab === 'controls'
-                ? 'bg-blue-600/20 text-blue-400 border border-blue-500/30 font-bold'
-                : 'bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-slate-200'
+                ? 'bg-blue-50 text-blue-700 dark:bg-blue-600/20 dark:text-blue-400 border border-blue-200 dark:border-blue-500/30 font-bold shadow-sm'
+                : 'bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-800'
             }`}
           >
             <Settings className="w-3.5 h-3.5 shrink-0" /> Config
@@ -982,11 +982,11 @@ export default function App() {
             onClick={() => setProjectTab('env')}
             className={`px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer whitespace-nowrap ${
               projectTab === 'env'
-                ? 'bg-blue-600/20 text-blue-400 border border-blue-500/30 font-bold'
-                : 'bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-slate-200'
+                ? 'bg-blue-50 text-blue-700 dark:bg-blue-600/20 dark:text-blue-400 border border-blue-200 dark:border-blue-500/30 font-bold shadow-sm'
+                : 'bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-800'
             }`}
           >
-            <Key className="w-3.5 h-3.5 text-amber-400 shrink-0" /> .env
+            <Key className="w-3.5 h-3.5 text-amber-500 shrink-0" /> .env
           </button>
 
           <button
@@ -994,11 +994,11 @@ export default function App() {
             onClick={() => setProjectTab('deployments')}
             className={`px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer whitespace-nowrap ${
               projectTab === 'deployments'
-                ? 'bg-blue-600/20 text-blue-400 border border-blue-500/30 font-bold'
-                : 'bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-slate-200'
+                ? 'bg-blue-50 text-blue-700 dark:bg-blue-600/20 dark:text-blue-400 border border-blue-200 dark:border-blue-500/30 font-bold shadow-sm'
+                : 'bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-800'
             }`}
           >
-            <GitCommit className="w-3.5 h-3.5 text-indigo-400 shrink-0" /> Histórico ({activeProject.deploymentsHistory?.length || 0})
+            <GitCommit className="w-3.5 h-3.5 text-indigo-500 shrink-0" /> Histórico ({activeProject.deploymentsHistory?.length || 0})
           </button>
 
           <button
@@ -1006,11 +1006,11 @@ export default function App() {
             onClick={() => setProjectTab('logs')}
             className={`px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer whitespace-nowrap ${
               projectTab === 'logs'
-                ? 'bg-blue-600/20 text-blue-400 border border-blue-500/30 font-bold'
-                : 'bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-slate-200'
+                ? 'bg-blue-50 text-blue-700 dark:bg-blue-600/20 dark:text-blue-400 border border-blue-200 dark:border-blue-500/30 font-bold shadow-sm'
+                : 'bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-800'
             }`}
           >
-            <Terminal className="w-3.5 h-3.5 text-emerald-400 shrink-0" /> Logs
+            <Terminal className="w-3.5 h-3.5 text-emerald-500 shrink-0" /> Logs
           </button>
 
           <button
@@ -1018,11 +1018,11 @@ export default function App() {
             onClick={() => setProjectTab('cron')}
             className={`px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer whitespace-nowrap ${
               projectTab === 'cron'
-                ? 'bg-blue-600/20 text-blue-400 border border-blue-500/30 font-bold'
-                : 'bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-slate-200'
+                ? 'bg-blue-50 text-blue-700 dark:bg-blue-600/20 dark:text-blue-400 border border-blue-200 dark:border-blue-500/30 font-bold shadow-sm'
+                : 'bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-800'
             }`}
           >
-            <Clock className="w-3.5 h-3.5 text-cyan-400 shrink-0" /> Cron
+            <Clock className="w-3.5 h-3.5 text-cyan-500 shrink-0" /> Cron
           </button>
 
           <button
@@ -1030,11 +1030,11 @@ export default function App() {
             onClick={() => setProjectTab('files')}
             className={`px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer whitespace-nowrap ${
               projectTab === 'files'
-                ? 'bg-blue-600/20 text-blue-400 border border-blue-500/30 font-bold'
-                : 'bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-slate-200'
+                ? 'bg-blue-50 text-blue-700 dark:bg-blue-600/20 dark:text-blue-400 border border-blue-200 dark:border-blue-500/30 font-bold shadow-sm'
+                : 'bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-800'
             }`}
           >
-            <FolderGit2 className="w-3.5 h-3.5 text-yellow-400 shrink-0" /> Arquivos
+            <FolderGit2 className="w-3.5 h-3.5 text-yellow-500 shrink-0" /> Arquivos
           </button>
 
           <button
@@ -1042,11 +1042,11 @@ export default function App() {
             onClick={() => setProjectTab('database')}
             className={`px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer whitespace-nowrap ${
               projectTab === 'database'
-                ? 'bg-blue-600/20 text-blue-400 border border-blue-500/30 font-bold'
-                : 'bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-slate-200'
+                ? 'bg-blue-50 text-blue-700 dark:bg-blue-600/20 dark:text-blue-400 border border-blue-200 dark:border-blue-500/30 font-bold shadow-sm'
+                : 'bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-800'
             }`}
           >
-            <Database className="w-3.5 h-3.5 text-indigo-400 shrink-0" /> Banco de Dados
+            <Database className="w-3.5 h-3.5 text-indigo-500 shrink-0" /> Banco de Dados
           </button>
         </div>
 
@@ -1689,40 +1689,40 @@ export default function App() {
                                 setSelectedDbName(boundDb.name || boundDb.slug);
                                 setActiveNav('databases');
                               }}
-                              className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-200 flex items-center gap-1.5 transition cursor-pointer"
+                              className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 flex items-center gap-1.5 transition cursor-pointer"
                             >
-                              <Table className="w-3.5 h-3.5 text-indigo-400" /> Explorar Tabelas
+                              <Table className="w-3.5 h-3.5 text-indigo-500" /> Explorar Tabelas
                             </button>
                           </div>
                         </div>
 
                         {/* String de Conexão */}
-                        <div className="p-3 bg-slate-900 border border-slate-800 rounded-xl space-y-1.5">
+                        <div className="p-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl space-y-1.5 shadow-sm">
                           <div className="flex items-center justify-between text-xs">
-                            <span className="text-slate-400 font-medium flex items-center gap-1.5">
-                              <Key className="w-3.5 h-3.5 text-amber-400" /> Variável DATABASE_URL (.env)
+                            <span className="text-slate-600 dark:text-slate-400 font-medium flex items-center gap-1.5">
+                              <Key className="w-3.5 h-3.5 text-amber-500" /> Variável DATABASE_URL (.env)
                             </span>
                             <button
                               type="button"
                               onClick={() => copyToClipboard(boundDb.connectionSnippet || boundDb.databaseUrl, 'DATABASE_URL')}
-                              className="text-cyan-400 hover:text-cyan-300 text-xs font-medium flex items-center gap-1 cursor-pointer"
+                              className="text-blue-600 dark:text-cyan-400 hover:underline text-xs font-medium flex items-center gap-1 cursor-pointer"
                             >
                               <Copy className="w-3.5 h-3.5" /> Copiar String de Conexão
                             </button>
                           </div>
-                          <div className="p-2.5 bg-black/60 rounded-lg font-mono text-xs text-amber-300 border border-slate-800/80 break-all select-all">
+                          <div className="p-2.5 bg-slate-900 text-amber-300 rounded-lg font-mono text-xs border border-slate-800 break-all select-all">
                             {boundDb.connectionSnippet || boundDb.databaseUrl}
                           </div>
                         </div>
 
                         {/* Importar e Executar Script SQL (.sql) */}
-                        <div className="p-4 bg-slate-900/60 border border-slate-800 rounded-xl space-y-3">
+                        <div className="p-4 bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 rounded-xl space-y-3 shadow-sm">
                           <div className="flex flex-wrap items-center justify-between gap-2">
                             <div>
-                              <h4 className="text-xs font-bold uppercase tracking-wider text-cyan-400 flex items-center gap-1.5">
-                                <FileCode className="w-4 h-4 text-cyan-400" /> Executar / Importar Script SQL (.sql)
+                              <h4 className="text-xs font-bold uppercase tracking-wider text-blue-600 dark:text-cyan-400 flex items-center gap-1.5">
+                                <FileCode className="w-4 h-4 text-blue-500 dark:text-cyan-400" /> Executar / Importar Script SQL (.sql)
                               </h4>
-                              <p className="text-[11px] text-slate-400">
+                              <p className="text-[11px] text-slate-500 dark:text-slate-400">
                                 Importe DDL/DML, crie tabelas e popule dados iniciais no banco "{boundDb.name}".
                               </p>
                             </div>
@@ -1730,7 +1730,7 @@ export default function App() {
 
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                             <div>
-                              <label className="block text-xs text-slate-400 mb-1">
+                              <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">
                                 Caminho do Arquivo .sql no Projeto (Opcional)
                               </label>
                               <input
@@ -1738,7 +1738,7 @@ export default function App() {
                                 placeholder="Ex: schema.sql ou /var/www/projects/..."
                                 value={projectSqlFilePath}
                                 onChange={(e) => setProjectSqlFilePath(e.target.value)}
-                                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white font-mono focus:outline-none focus:border-cyan-500"
+                                className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white font-mono focus:outline-none focus:border-blue-500"
                               />
                             </div>
                             <div className="flex items-end">
@@ -1746,7 +1746,7 @@ export default function App() {
                                 type="button"
                                 disabled={executingProjectSql}
                                 onClick={() => handleExecuteProjectSql(boundDb.slug)}
-                                className="w-full py-2 px-4 rounded-xl bg-gradient-to-r from-cyan-500 to-indigo-600 hover:from-cyan-400 hover:to-indigo-500 text-slate-950 font-bold text-xs flex items-center justify-center gap-2 transition cursor-pointer disabled:opacity-50 shadow-lg shadow-cyan-500/10"
+                                className="w-full py-2 px-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs flex items-center justify-center gap-2 transition cursor-pointer disabled:opacity-50 shadow-sm"
                               >
                                 {executingProjectSql ? (
                                   <>
@@ -1762,7 +1762,7 @@ export default function App() {
                           </div>
 
                           <div>
-                            <label className="block text-xs text-slate-400 mb-1">
+                            <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">
                               Ou Cole os Comandos SQL Diretamente
                             </label>
                             <textarea
@@ -1770,7 +1770,7 @@ export default function App() {
                               placeholder={"CREATE TABLE IF NOT EXISTS exemplo (\n  id INT AUTO_INCREMENT PRIMARY KEY,\n  nome VARCHAR(255) NOT NULL\n);\nINSERT INTO exemplo (nome) VALUES ('Item Teste');"}
                               value={projectSqlScript}
                               onChange={(e) => setProjectSqlScript(e.target.value)}
-                              className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs font-mono text-emerald-300 focus:outline-none focus:border-cyan-500 leading-relaxed"
+                              className="w-full bg-slate-900 border border-slate-800 rounded-xl p-3 text-xs font-mono text-emerald-300 focus:outline-none focus:border-blue-500 leading-relaxed"
                             />
                           </div>
 
@@ -1800,28 +1800,28 @@ export default function App() {
                     ) : (
                       /* Nenhum Banco Vinculado: Card 1-Clique para Criar */
                       <div className="space-y-4">
-                        <div className="p-5 rounded-2xl bg-gradient-to-br from-indigo-950/40 via-slate-900 to-slate-950 border border-indigo-500/30 space-y-3">
+                        <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-3 shadow-sm">
                           <div className="flex items-center gap-3">
-                            <div className="p-3 rounded-xl bg-indigo-500/20 text-indigo-400 border border-indigo-500/40">
+                            <div className="p-3 rounded-xl bg-blue-500/10 text-blue-500 dark:bg-indigo-500/20 dark:text-indigo-400 border border-blue-500/20">
                               <Database className="w-6 h-6" />
                             </div>
                             <div>
-                              <h3 className="text-sm font-bold text-white">
+                              <h3 className="text-sm font-bold text-slate-900 dark:text-white">
                                 Provisionar Banco de Dados 1-Clique para "{activeProject.name}"
                               </h3>
-                              <p className="text-xs text-slate-400 mt-0.5">
-                                Crie instantaneamente um banco isolado para este projeto e injete a <span className="text-amber-300 font-mono">DATABASE_URL</span> no <span className="text-cyan-300 font-mono">.env</span> automaticamente.
+                              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                                Crie instantaneamente um banco isolado para este projeto e injete a <span className="text-amber-600 dark:text-amber-300 font-mono">DATABASE_URL</span> no <span className="text-blue-600 dark:text-cyan-300 font-mono">.env</span> automaticamente.
                               </p>
                             </div>
                           </div>
 
                           <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-2">
                             <div>
-                              <label className="block text-xs text-slate-400 mb-1">Motor do Banco</label>
+                              <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">Motor do Banco</label>
                               <select
                                 value={newProjectDbEngine}
                                 onChange={(e) => setNewProjectDbEngine(e.target.value)}
-                                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500"
+                                className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-blue-500"
                               >
                                 <option value="mariadb">🐬 MariaDB / MySQL (Padrão SENAI)</option>
                                 <option value="postgres">🐘 PostgreSQL 16</option>
@@ -1830,7 +1830,7 @@ export default function App() {
                             </div>
 
                             <div className="md:col-span-2">
-                              <label className="block text-xs text-slate-400 mb-1">
+                              <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">
                                 Script SQL Inicial no Projeto (Opcional)
                               </label>
                               <input
@@ -1838,13 +1838,13 @@ export default function App() {
                                 placeholder="Ex: schema.sql ou banco.sql (vazio para banco limpo)"
                                 value={projectSqlFilePath}
                                 onChange={(e) => setProjectSqlFilePath(e.target.value)}
-                                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white font-mono focus:outline-none focus:border-indigo-500"
+                                className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white font-mono focus:outline-none focus:border-blue-500"
                               />
                             </div>
                           </div>
 
                           <div>
-                            <label className="block text-xs text-slate-400 mb-1">
+                            <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">
                               Ou Cole DDL / DML Inicial (Opcional)
                             </label>
                             <textarea
@@ -1852,20 +1852,20 @@ export default function App() {
                               placeholder="CREATE TABLE usuarios (...); INSERT INTO ..."
                               value={projectSqlScript}
                               onChange={(e) => setProjectSqlScript(e.target.value)}
-                              className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs font-mono text-emerald-300 focus:outline-none focus:border-indigo-500"
+                              className="w-full bg-slate-900 border border-slate-800 rounded-xl p-3 text-xs font-mono text-emerald-300 focus:outline-none focus:border-blue-500"
                             />
                           </div>
 
                           <div className="flex items-center justify-between pt-2">
-                            <span className="text-xs text-slate-400">
-                              Nome sugerido para o banco: <span className="font-mono text-indigo-300">{activeProject.slug}</span>
+                            <span className="text-xs text-slate-500 dark:text-slate-400">
+                              Nome sugerido para o banco: <span className="font-mono text-blue-600 dark:text-indigo-300">{activeProject.slug}</span>
                             </span>
 
                             <button
                               type="button"
                               disabled={creatingProjectDb}
                               onClick={() => handleCreateAndInjectProjectDb(activeProject.slug)}
-                              className="py-2.5 px-5 rounded-xl bg-gradient-to-r from-indigo-500 to-cyan-500 hover:from-indigo-400 hover:to-cyan-400 text-slate-950 font-bold text-xs flex items-center gap-2 transition cursor-pointer disabled:opacity-50 shadow-lg shadow-indigo-500/20"
+                              className="py-2.5 px-5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs flex items-center gap-2 transition cursor-pointer disabled:opacity-50 shadow-sm"
                             >
                               {creatingProjectDb ? (
                                 <>
@@ -2263,11 +2263,11 @@ export default function App() {
                   return (
                     <div
                       key={proj.slug}
-                      className={`bg-slate-900/80 border transition-all duration-200 rounded-2xl shadow-lg overflow-hidden ${
-                        isExpanded ? 'border-cyan-500/50 ring-1 ring-cyan-500/20 bg-slate-900' : 'border-slate-800 hover:border-slate-700'
-                      }`}
+                      className={`border transition-all duration-200 rounded-2xl overflow-hidden ${
+                        theme === 'dark' ? 'bg-[#0d131f] border-slate-800 hover:border-slate-700' : 'bg-white border-slate-200 hover:border-slate-300 shadow-sm'
+                      } ${isExpanded ? (theme === 'dark' ? 'ring-1 ring-blue-500/40 border-blue-500/40' : 'ring-1 ring-blue-500/40 border-blue-500/40') : ''}`}
                     >
-                      {/* Linha Resumida do Projeto (Summary Row) */}
+                      {/* Linha Resumida do Projeto (Summary Card — Alinhado Linha a Linha) */}
                       <div
                         onClick={() => {
                           if (isExpanded) {
@@ -2277,114 +2277,138 @@ export default function App() {
                             if (!projectTab) setProjectTab('controls');
                           }
                         }}
-                        className="p-3.5 sm:p-4 flex flex-wrap items-center justify-between gap-3 cursor-pointer select-none hover:bg-slate-800/40 transition"
+                        className="p-4 cursor-pointer select-none hover:bg-slate-500/5 transition space-y-2.5"
                       >
-                        {/* Bloco Esquerdo: Seta, Nome, Status, Stack, Link Direto, AutoDeploy */}
-                        <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setActiveProjectSlug(isExpanded ? null : proj.slug);
-                              if (!isExpanded && !projectTab) setProjectTab('controls');
-                            }}
-                            className={`p-1.5 rounded-lg text-slate-400 hover:text-cyan-300 hover:bg-slate-800 transition transform ${
-                              isExpanded ? 'rotate-90 text-cyan-400 bg-slate-800' : ''
-                            }`}
-                            title={isExpanded ? 'Recolher detalhes' : 'Expandir no corpo da página'}
-                          >
-                            <ChevronRight className="w-4 h-4 transition-transform duration-200" />
-                          </button>
-
-                          <h3
-                            className="text-sm sm:text-base font-bold text-white hover:text-cyan-300 transition truncate max-w-[200px]"
-                            title={proj.name}
-                          >
-                            {proj.name}
-                          </h3>
-
-                          <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase whitespace-nowrap shrink-0 flex items-center gap-1.5 ${
-                            proj.status === 'running'
-                              ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
-                              : 'bg-red-500/15 text-red-400 border border-red-500/30'
-                          }`}>
-                            <span className={`w-1.5 h-1.5 rounded-full ${proj.status === "running" ? "bg-emerald-400 animate-pulse" : "bg-red-400"}`} />
-                            {proj.status === 'running' ? 'ONLINE' : 'STOPPED'}
-                          </span>
-
-                          <span className="px-2 py-0.5 rounded-md text-[9px] font-mono uppercase bg-indigo-500/15 text-indigo-300 border border-indigo-500/30 whitespace-nowrap shrink-0">
-                            {proj.projectType}
-                          </span>
-
-                          <a
-                            href={proj.url}
-                            target="_blank"
-                            rel="noreferrer"
-                            onClick={(e) => e.stopPropagation()}
-                            className="text-xs font-mono text-cyan-400 hover:underline hidden sm:inline-flex items-center gap-1 truncate max-w-[240px]"
-                            title={`Abrir ${proj.url}`}
-                          >
-                            <Globe className="w-3 h-3 shrink-0" />
-                            <span className="truncate">{proj.url}</span>
-                            <ExternalLink className="w-3 h-3 shrink-0 opacity-70" />
-                          </a>
-
-                          {proj.autoDeploy !== false && (
-                            <span className="hidden md:inline-flex px-1.5 py-0.5 rounded text-[9px] bg-cyan-500/10 text-cyan-300 border border-cyan-500/20 whitespace-nowrap shrink-0 items-center gap-1">
-                              <RefreshCw className="w-2.5 h-2.5 shrink-0" /> Auto
-                            </span>
-                          )}
-                        </div>
-
-                        {/* Bloco Direito: Telemetria (RAM, Disco, Commit) e Ações Rápidas */}
-                        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-                          <div className="hidden lg:flex items-center gap-1.5 text-[11px] font-mono text-slate-400 bg-slate-950/80 px-2 py-1 rounded-lg border border-slate-800">
-                            <GitCommit className="w-3 h-3 text-amber-400 shrink-0" />
-                            <span className="text-amber-300">#{proj.lastCommitHash || 'local'}</span>
-                          </div>
-
-                          <div className="flex items-center gap-1.5 whitespace-nowrap">
-                            <span className="px-2 py-1 rounded-lg bg-slate-950 border border-slate-800 text-[10px] font-mono text-cyan-300 flex items-center gap-1" title="Consumo de RAM">
-                              <Cpu className="w-3 h-3 shrink-0 text-cyan-400" /> {proj.ramFormatted || '0 B'}
-                            </span>
-                            <span className="px-2 py-1 rounded-lg bg-slate-950 border border-slate-800 text-[10px] font-mono text-indigo-300 flex items-center gap-1" title="Espaço em Disco">
-                              <HardDrive className="w-3 h-3 shrink-0 text-indigo-400" /> {proj.diskFormatted || '0 B'}
-                            </span>
-                          </div>
-
-                          {/* Ações Rápidas em Linha */}
-                          <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
+                        {/* LINHA 1: Identificação Principal, Status e Ações Rápidas */}
+                        <div className="flex items-center justify-between gap-3">
+                          <div className="flex items-center gap-2.5 min-w-0">
+                            {/* Seta de Expandir */}
                             <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setActiveProjectSlug(isExpanded ? null : proj.slug);
+                                if (!isExpanded && !projectTab) setProjectTab('controls');
+                              }}
+                              className={`p-1 rounded-lg text-slate-400 hover:text-blue-500 transition transform ${
+                                isExpanded ? 'rotate-90 text-blue-500 bg-blue-500/10' : ''
+                              }`}
+                              title={isExpanded ? 'Recolher detalhes' : 'Expandir no corpo da página'}
+                            >
+                              <ChevronRight className="w-4 h-4 transition-transform duration-200" />
+                            </button>
+
+                            {/* Nome do Projeto */}
+                            <h3 className="text-base font-bold text-slate-900 dark:text-white truncate">
+                              {proj.name}
+                            </h3>
+
+                            {/* Status ONLINE / PARADO */}
+                            <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase whitespace-nowrap shrink-0 flex items-center gap-1.5 ${
+                              proj.status === 'running'
+                                ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30'
+                                : 'bg-red-500/15 text-red-600 dark:text-red-400 border border-red-500/30'
+                            }`}>
+                              <span className={`w-1.5 h-1.5 rounded-full ${proj.status === "running" ? "bg-emerald-500 animate-pulse" : "bg-red-500"}`} />
+                              {proj.status === 'running' ? 'ONLINE' : 'PARADO'}
+                            </span>
+
+                            {/* Stack / Tipo */}
+                            <span className="px-2 py-0.5 rounded-md text-[9px] font-mono uppercase bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 whitespace-nowrap shrink-0">
+                              {proj.projectType}
+                            </span>
+                          </div>
+
+                          {/* Ações Rápidas do Lado Direito */}
+                          <div className="flex items-center gap-2 shrink-0" onClick={(e) => e.stopPropagation()}>
+                            <button
+                              type="button"
                               onClick={() => handleManualRedeploy(proj)}
                               disabled={actionLoading}
-                              className="px-2.5 py-1 rounded-lg bg-cyan-500/15 hover:bg-cyan-500/25 border border-cyan-500/30 text-cyan-300 text-xs font-semibold flex items-center gap-1 cursor-pointer disabled:opacity-50 whitespace-nowrap transition"
+                              className="px-2.5 py-1 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold flex items-center gap-1 cursor-pointer disabled:opacity-50 whitespace-nowrap transition shadow-sm"
                               title="Fazer Deploy Manual Agora"
                             >
                               <Rocket className="w-3.5 h-3.5 shrink-0" /> <span className="hidden sm:inline">Deploy</span>
                             </button>
 
                             <button
+                              type="button"
                               onClick={() => {
                                 setActiveProjectSlug(isExpanded ? null : proj.slug);
                                 if (!isExpanded && !projectTab) setProjectTab('controls');
                               }}
-                              className={`px-2.5 py-1 rounded-lg text-xs font-semibold flex items-center gap-1.5 cursor-pointer whitespace-nowrap transition ${
+                              className={`px-2.5 py-1 rounded-lg text-xs font-semibold flex items-center gap-1 cursor-pointer whitespace-nowrap transition ${
                                 isExpanded
-                                  ? 'bg-cyan-500 text-slate-950 shadow-md font-bold'
-                                  : 'bg-slate-800 hover:bg-slate-700 text-white'
+                                  ? 'bg-blue-600/15 text-blue-500 border border-blue-500/30'
+                                  : 'bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700'
                               }`}
-                              title={isExpanded ? 'Recolher detalhes' : 'Expandir gerenciador'}
                             >
-                              {isExpanded ? (
-                                <>
-                                  <ChevronDown className="w-3.5 h-3.5 stroke-[2.5]" /> <span>Recolher</span>
-                                </>
-                              ) : (
-                                <>
-                                  <ChevronRight className="w-3.5 h-3.5 stroke-[2.5]" /> <span>Gerenciar</span>
-                                </>
-                              )}
+                              <Settings className="w-3.5 h-3.5 shrink-0" />
+                              <span>{isExpanded ? 'Fechar' : 'Gerenciar'}</span>
                             </button>
+                          </div>
+                        </div>
+
+                        {/* LINHA 2: Endereço HTTPS & Conexão Externa */}
+                        <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 pt-0.5">
+                          <div className="flex items-center gap-2 truncate">
+                            <span className="text-slate-400 dark:text-slate-500 text-[11px]">URL:</span>
+                            <a
+                              href={proj.url}
+                              target="_blank"
+                              rel="noreferrer"
+                              onClick={(e) => e.stopPropagation()}
+                              className="font-mono text-blue-600 dark:text-blue-400 hover:underline inline-flex items-center gap-1 truncate text-xs"
+                              title={`Abrir ${proj.url}`}
+                            >
+                              <Globe className="w-3.5 h-3.5 shrink-0" />
+                              <span className="truncate">{proj.url}</span>
+                              <ExternalLink className="w-3 h-3 shrink-0 opacity-70" />
+                            </a>
+                          </div>
+
+                          <div className="flex items-center gap-2 text-[11px] font-mono shrink-0">
+                            <span>Porta: <span className="text-slate-700 dark:text-slate-300">{proj.port ? `127.0.0.1:${proj.port}` : 'Caddy Web'}</span></span>
+                          </div>
+                        </div>
+
+                        {/* LINHA 3: Métricas de Recursos (RAM, Disco, BD, Commit, AutoDeploy) */}
+                        <div className="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-slate-200/70 dark:border-slate-800/80 text-[11px] font-mono">
+                          {/* Recursos */}
+                          <div className="flex items-center gap-3">
+                            <span className="flex items-center gap-1 text-slate-600 dark:text-slate-300">
+                              <Cpu className="w-3.5 h-3.5 text-blue-500 shrink-0" />
+                              <span>RAM: {proj.ramFormatted || '0 B'}</span>
+                            </span>
+
+                            <span className="flex items-center gap-1 text-slate-600 dark:text-slate-300">
+                              <HardDrive className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
+                              <span>Disco: {proj.diskFormatted || '0 B'}</span>
+                            </span>
+
+                            {/* Indicador de Banco Vinculado na Linha de Métricas */}
+                            {(proj.databaseSlug || proj.database_slug || proj.slug === 'labwarenext') ? (
+                              <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-semibold">
+                                <Database className="w-3.5 h-3.5 shrink-0" />
+                                <span>BD: {proj.databaseSlug || 'labw'}</span>
+                              </span>
+                            ) : null}
+                          </div>
+
+                          {/* Git & Status de Atualização */}
+                          <div className="flex items-center gap-3 text-slate-500 dark:text-slate-400">
+                            <span className="flex items-center gap-1">
+                              <GitCommit className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                              <span className="text-amber-600 dark:text-amber-400">#{proj.lastCommitHash || 'local'}</span>
+                            </span>
+
+                            {proj.autoDeploy !== false ? (
+                              <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400">
+                                <RefreshCw className="w-3 h-3 shrink-0" /> Auto-Deploy 60s
+                              </span>
+                            ) : (
+                              <span className="text-slate-400">Deploy Manual</span>
+                            )}
                           </div>
                         </div>
                       </div>

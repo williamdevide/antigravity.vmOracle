@@ -133,12 +133,17 @@ def get_aco_platform_telemetry() -> dict[str, Any]:
     aco_dir = "/opt/antigravity-oracle" if os.path.exists("/opt/antigravity-oracle") else BASE_DIR
     disk_bytes = get_directory_size_bytes(aco_dir)
 
-    deploy_time_str = "10/11/2026 08:50"
+    deploy_time_str = datetime.datetime.now().strftime("%d/%m/%Y %H:%M")
     try:
-        main_py = os.path.join(aco_dir, "backend", "main.py")
-        if os.path.exists(main_py):
-            mtime = os.path.getmtime(main_py)
-            deploy_time_str = datetime.datetime.fromtimestamp(mtime).strftime("%d/%m/%Y %H:%M")
+        # Prioriza a data do último commit Git ou do build do frontend
+        cmd_git = ["git", "-C", aco_dir, "log", "-1", "--format=%cd", "--date=format:%d/%m/%Y %H:%M"]
+        res = subprocess.run(cmd_git, capture_output=True, text=True, timeout=3)
+        if res.returncode == 0 and res.stdout.strip():
+            deploy_time_str = res.stdout.strip()
+        else:
+            dist_index = os.path.join(aco_dir, "frontend", "dist", "index.html")
+            if os.path.exists(dist_index):
+                deploy_time_str = datetime.datetime.fromtimestamp(os.path.getmtime(dist_index)).strftime("%d/%m/%Y %H:%M")
     except Exception:
         pass
 
@@ -328,7 +333,7 @@ def load_projects() -> list[dict[str, Any]]:
     data = []
     if os.path.exists(PROJECTS_DB_PATH):
         try:
-            with open(PROJECTS_DB_PATH, "r", encoding="utf-8") as f:
+            with open(PROJECTS_DB_PATH, "r", encoding="utf-8-sig") as f:
                 loaded = json.load(f)
                 if isinstance(loaded, list):
                     data = loaded
