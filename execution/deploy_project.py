@@ -1115,6 +1115,10 @@ def deploy_project(
     git_token: str = "",
     cron_schedule: str = "",
     cron_command: str = "",
+    create_database: bool = False,
+    database_engine: str = "mysql",
+    initial_sql: str = "",
+    initial_sql_file: str = "",
 ) -> dict[str, Any]:
     """
     Executa o ciclo completo de Deploy de um projeto (Frontend, Backend, Full-Stack ou PHP),
@@ -1172,6 +1176,52 @@ def deploy_project(
         logs.append(
             f"[+] Commit ativo: {commit_meta['shortHash']} — \"{commit_meta['message']}\" ({commit_meta['author']})"
         )
+
+        # 1.5. Provisionamento Automático de Banco de Dados 1-Clique (se solicitado)
+        bound_db_slug = existing.get("databaseSlug") if existing else None
+        if create_database:
+            try:
+                import database_manager as db_mgr
+                logs.append(f"[*] Provisionando banco de dados 1-Clique ({database_engine.upper()}) para o projeto...")
+                sql_file_to_run = ""
+                if initial_sql_file:
+                    candidate = os.path.join(target_dir, initial_sql_file.lstrip("/\\"))
+                    if os.path.exists(candidate):
+                        sql_file_to_run = candidate
+                        logs.append(f"[*] Encontrado script SQL no repositório: {initial_sql_file}")
+                elif not initial_sql:
+                    for candidate_name in ("schema.sql", "database.sql", "banco.sql", "dump.sql", "init.sql", "install.sql"):
+                        candidate = os.path.join(target_dir, candidate_name)
+                        if os.path.exists(candidate):
+                            sql_file_to_run = candidate
+                            logs.append(f"[*] Auto-detectado script SQL no repositório: {candidate_name}")
+                            break
+
+                db_res = db_mgr.create_project_database(
+                    project_slug=clean_slug,
+                    engine=database_engine,
+                    initial_sql=initial_sql,
+                    initial_sql_file=sql_file_to_run,
+                    custom_name=f"Banco {effective_name}",
+                )
+                created_db = db_res["database"]
+                bound_db_slug = created_db["slug"]
+                logs.append(f"[+] Banco de dados provisionado: {created_db['dbName']} ({created_db['engineLabel']})")
+
+                db_snippet = created_db.get("envSnippet", "")
+                if db_snippet:
+                    if effective_env_text:
+                        effective_env_text = effective_env_text.strip() + "\n\n# Banco 1-Clique A.C.O.\n" + db_snippet
+                    else:
+                        effective_env_text = "# Banco 1-Clique A.C.O.\n" + db_snippet
+                    logs.append("[+] DATABASE_URL e credenciais injetadas no .env")
+
+                if db_res.get("sqlImport") and db_res["sqlImport"].get("ok"):
+                    logs.append(f"[+] {db_res['sqlImport']['message']}")
+                elif db_res.get("sqlImport") and not db_res["sqlImport"].get("ok"):
+                    logs.append(f"[!] Aviso no SQL: {db_res['sqlImport'].get('error')}")
+            except Exception as e:
+                logs.append(f"[!] Erro no provisionamento do banco 1-clique: {e}")
 
         # 2. Escrever Variaveis de Ambiente (.env / .aco.env)
         aco_env_path = write_project_env_files(target_dir, effective_env_text)
@@ -1414,6 +1464,7 @@ def deploy_project(
             "lastCommitMessage": commit_meta["message"],
             "lastCommitAuthor": commit_meta["author"],
             "envVarsText": effective_env_text,
+            "databaseSlug": bound_db_slug,
             "diskBytes": final_bytes,
             "diskMB": round(final_bytes / (1024 * 1024), 2),
             "diskFormatted": final_human,
@@ -1457,6 +1508,7 @@ def update_project_settings(
     start_command: str | None = None,
     redeploy: bool = False,
     github_token: str = "",
+    database_slug: str | None = None,
 ) -> dict[str, Any]:
     """Atualiza variaveis .env, configuracao de Auto-Deploy ou comando de inicializacao de um projeto."""
     clean_slug = sanitize_slug(slug)
@@ -1476,6 +1528,9 @@ def update_project_settings(
 
     if start_command is not None:
         target["startCommand"] = start_command.strip()
+
+    if database_slug is not None:
+        target["databaseSlug"] = database_slug.strip()
 
     save_projects(projects)
 

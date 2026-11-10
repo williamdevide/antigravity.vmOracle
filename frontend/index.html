@@ -22,9 +22,66 @@
     </script>
     <style>
       body {
+        font-family: Inter, system-ui, -apple-system, sans-serif;
+        transition: background-color 0.2s ease, color 0.2s ease;
+      }
+      html.dark body {
         background-color: #090d16;
         color: #f1f5f9;
-        font-family: Inter, system-ui, -apple-system, sans-serif;
+      }
+      html.light body {
+        background-color: #f8fafc;
+        color: #0f172a;
+      }
+      /* Adaptações do Tema Claro */
+      html.light .bg-slate-950,
+      html.light .bg-slate-950\/40,
+      html.light .bg-slate-950\/60,
+      html.light .bg-slate-950\/70,
+      html.light .bg-slate-950\/80,
+      html.light .bg-slate-950\/90 {
+        background-color: #f1f5f9 !important;
+        color: #0f172a !important;
+      }
+      html.light .bg-slate-900,
+      html.light .bg-slate-900\/50,
+      html.light .bg-slate-900\/60,
+      html.light .bg-slate-900\/70,
+      html.light .bg-slate-900\/80,
+      html.light .bg-slate-900\/90 {
+        background-color: #ffffff !important;
+        color: #1e293b !important;
+      }
+      html.light .border-slate-800,
+      html.light .border-slate-800\/50,
+      html.light .border-slate-800\/80,
+      html.light .border-slate-700 {
+        border-color: #e2e8f0 !important;
+      }
+      html.light .text-white {
+        color: #0f172a !important;
+      }
+      html.light .text-slate-100,
+      html.light .text-slate-200,
+      html.light .text-slate-300 {
+        color: #334155 !important;
+      }
+      html.light .text-slate-400 {
+        color: #64748b !important;
+      }
+      html.light input:not([type="checkbox"]):not([type="radio"]),
+      html.light select,
+      html.light textarea {
+        background-color: #ffffff !important;
+        color: #0f172a !important;
+        border-color: #cbd5e1 !important;
+      }
+      html.light pre,
+      html.light .bg-black\/90,
+      html.light .bg-black\/80,
+      html.light .bg-black\/60 {
+        background-color: #0f172a !important;
+        color: #38bdf8 !important;
       }
     </style>
   </head>

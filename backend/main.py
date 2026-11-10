@@ -223,6 +223,21 @@ class DeployRequest(BaseModel):
     gitToken: str = Field(default="", description="Token pessoal opcional para repositorios privados de alunos")
     cronSchedule: str = Field(default="", description="Expressao cron opcional (ex: */5 * * * *)")
     cronCommand: str = Field(default="", description="Comando opcional a ser executado no cron")
+    createDatabase: bool = Field(default=False, description="Provisionar banco de dados dedicado 1-clique")
+    databaseEngine: str = Field(default="mysql", description="mysql, postgresql, sqlite, redis")
+    initialSql: str = Field(default="", description="Script SQL a ser executado na criacao do banco")
+    initialSqlFile: str = Field(default="", description="Arquivo SQL no repositorio a ser executado (ex: schema.sql)")
+
+
+class ImportSqlRequest(BaseModel):
+    sql: str = Field(default="", description="Script SQL em texto")
+    filePath: str = Field(default="", description="Caminho do arquivo .sql no servidor")
+
+
+class ProjectDatabaseRequest(BaseModel):
+    engine: str = Field(default="mysql", description="mysql, postgresql, sqlite, redis")
+    initialSql: str = Field(default="", description="Script SQL a ser executado")
+    initialSqlFile: str = Field(default="", description="Arquivo SQL a ser executado")
 
 
 class ProjectCronRequest(BaseModel):
@@ -582,6 +597,10 @@ def deploy_new_project(req: DeployRequest, _admin: dict[str, Any] = Depends(veri
             git_token=req.gitToken,
             cron_schedule=req.cronSchedule,
             cron_command=req.cronCommand,
+            create_database=req.createDatabase,
+            database_engine=req.databaseEngine,
+            initial_sql=req.initialSql,
+            initial_sql_file=req.initialSqlFile,
         )
         return {"status": "success", "ok": True, "project": record, "log": record.get("lastBuildLog", "")}
     except Exception as e:
@@ -855,6 +874,7 @@ def inject_database_into_project(
     updated = deployer.update_project_settings(
         slug=project_slug,
         env_vars_text=new_env,
+        database_slug=db_slug,
         redeploy=False,
         github_token=token,
     )
@@ -865,6 +885,68 @@ def inject_database_into_project(
         "project": updated,
         "injectedDatabase": db_slug,
     }
+
+
+@app.post("/api/databases/{db_slug}/import-sql")
+def import_sql_endpoint(
+    db_slug: str,
+    req: ImportSqlRequest,
+    _admin: dict[str, Any] = Depends(verify_admin_user),
+):
+    """Executa / importa um script .sql para dentro de um banco de dados gerenciado."""
+    try:
+        res = db_mgr.import_sql_script(db_slug, sql_content=req.sql, sql_file_path=req.filePath)
+        return {"status": "success", "ok": True, **res}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
+
+
+@app.post("/api/projects/{slug}/database/create-and-inject")
+def create_and_inject_project_database_endpoint(
+    slug: str,
+    req: ProjectDatabaseRequest,
+    _admin: dict[str, Any] = Depends(verify_admin_user),
+):
+    """Cria um banco 1-clique dedicado para o projeto, executa SQL inicial (opcional) e injeta no .env."""
+    try:
+        projects = deployer.load_projects()
+        target_proj = next((p for p in projects if p.get("slug") == slug), None)
+        if not target_proj:
+            raise HTTPException(status_code=404, detail="Projeto não encontrado.")
+
+        db_res = db_mgr.create_project_database(
+            project_slug=slug,
+            engine=req.engine,
+            initial_sql=req.initialSql,
+            initial_sql_file=req.initialSqlFile,
+            custom_name=f"Banco {target_proj.get('name', slug)}",
+        )
+        created_db = db_res["database"]
+        snippet = created_db.get("envSnippet", "")
+
+        existing_env = target_proj.get("envVarsText", "").strip()
+        new_env = (existing_env + "\n\n# Banco 1-Clique A.C.O.\n" + snippet).strip() if existing_env else snippet
+
+        env_vars = load_env_file()
+        token = env_vars.get("GITHUB_TOKEN", "").strip()
+        updated = deployer.update_project_settings(
+            slug=slug,
+            env_vars_text=new_env,
+            database_slug=created_db["slug"],
+            redeploy=False,
+            github_token=token,
+        )
+
+        return {
+            "status": "success",
+            "ok": True,
+            "message": f"Banco '{created_db['dbName']}' ({created_db['engineLabel']}) criado e injetado com sucesso!",
+            "database": created_db,
+            "sqlImport": db_res.get("sqlImport"),
+            "project": updated,
+        }
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
 
 
 # ================= ENDPOINTS DE EXPLORAÇÃO DE BANCO (ESTRUTURA E DADOS) =================

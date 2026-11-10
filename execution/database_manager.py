@@ -478,3 +478,103 @@ def get_table_data(db_name: str, table_name: str, limit: int = 50, offset: int =
     except Exception:
         return {"columns": [], "rows": [], "total": total}
 
+
+
+# ==============================================================================
+# IMPORTAÇÃO DE SQL E PROVISIONAMENTO DE BANCO DE PROJETO
+# ==============================================================================
+
+
+def import_sql_script(db_slug_or_name: str, sql_content: str = "", sql_file_path: str = "") -> dict[str, Any]:
+    """Importa um script .sql para dentro de um banco de dados gerenciado (MySQL/MariaDB, Postgres ou SQLite)."""
+    dbs = load_databases()
+    target = next((d for d in dbs if d.get("slug") == db_slug_or_name or d.get("dbName") == db_slug_or_name), None)
+
+    db_name = target.get("dbName", db_slug_or_name) if target else db_slug_or_name
+    engine = target.get("engine", "mysql") if target else "mysql"
+
+    if sql_file_path and os.path.exists(sql_file_path):
+        with open(sql_file_path, "r", encoding="utf-8", errors="replace") as f:
+            sql_content = f.read()
+
+    sql_content = (sql_content or "").strip()
+    if not sql_content:
+        raise ValueError("Nenhum comando ou script SQL fornecido para importação.")
+
+    if engine == "mysql":
+        cmd = ["sudo", "mysql", "--default-character-set=utf8mb4", db_name]
+        proc = subprocess.run(cmd, input=sql_content, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=180)
+        if proc.returncode != 0:
+            raise RuntimeError(f"Erro ao importar SQL no MariaDB: {proc.stderr[:1000]}")
+        tables = list_database_tables(db_name)
+        return {
+            "ok": True,
+            "status": "success",
+            "message": f"Script SQL executado com sucesso no banco '{db_name}'. {len(tables)} tabela(s) disponível(is).",
+            "tablesCount": len(tables),
+            "tables": tables,
+        }
+
+    elif engine == "postgresql":
+        cmd = ["sudo", "-u", "postgres", "psql", "-d", db_name]
+        proc = subprocess.run(cmd, input=sql_content, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=180)
+        if proc.returncode != 0:
+            raise RuntimeError(f"Erro ao importar SQL no PostgreSQL: {proc.stderr[:1000]}")
+        return {
+            "ok": True,
+            "status": "success",
+            "message": f"Script SQL executado com sucesso no PostgreSQL '{db_name}'.",
+        }
+
+    elif engine == "sqlite":
+        db_path = target.get("dataPath", "") if target else ""
+        if not db_path or not os.path.exists(db_path):
+            raise ValueError("Arquivo SQLite não encontrado.")
+        conn = sqlite3.connect(db_path)
+        conn.executescript(sql_content)
+        conn.commit()
+        conn.close()
+        return {
+            "ok": True,
+            "status": "success",
+            "message": "Script SQL executado com sucesso no SQLite.",
+        }
+    else:
+        raise ValueError(f"Importação SQL não suportada para engine '{engine}'.")
+
+
+def create_project_database(
+    project_slug: str,
+    engine: str = "mysql",
+    initial_sql: str = "",
+    initial_sql_file: str = "",
+    custom_name: str = "",
+) -> dict[str, Any]:
+    """Cria um banco dedicado para um projeto, importa SQL inicial (se houver) e retorna os dados para injeção."""
+    clean_proj = sanitize_db_slug(project_slug)
+    db_label = custom_name.strip() if custom_name else f"Banco {project_slug}"
+    db_slug = f"proj_{clean_proj}"
+
+    dbs = load_databases()
+    existing = next((d for d in dbs if d.get("slug") == db_slug), None)
+    if existing:
+        db_record = existing
+    else:
+        db_record = create_database(name=db_label, engine=engine)
+
+    import_result = None
+    if initial_sql_file or initial_sql:
+        try:
+            import_result = import_sql_script(
+                db_slug_or_name=db_record["slug"],
+                sql_content=initial_sql,
+                sql_file_path=initial_sql_file,
+            )
+        except Exception as e:
+            import_result = {"ok": False, "error": str(e)}
+
+    return {
+        "ok": True,
+        "database": db_record,
+        "sqlImport": import_result,
+    }

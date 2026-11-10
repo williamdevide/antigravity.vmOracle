@@ -6,7 +6,8 @@ import {
   Github, Search, Lock, LogOut, UserCheck, Edit3, Check, X,
   Database, Layers, Settings, FileText, GitCommit, GitBranch,
   Key, Copy, ArrowLeft, Sparkles, Eye, EyeOff, RotateCcw, Box,
-  ChevronRight, ArrowUpRight, Save, Folder, Table, FileCode, ChevronDown
+  ChevronRight, ArrowUpRight, Save, Folder, Table, FileCode, ChevronDown,
+  Sun, Moon
 } from 'lucide-react';
 import { auth, loginWithGoogle, logoutGoogle, ALLOWED_EMAIL } from './firebase';
 import { onAuthStateChanged } from 'firebase/auth';
@@ -43,6 +44,49 @@ export default function App() {
   const [settingsAutoDeploy, setSettingsAutoDeploy] = useState(true);
   const [injectDbSlug, setInjectDbSlug] = useState('');
 
+  // Tema da Interface: 'dark' | 'light'
+  const [theme, setTheme] = useState(() => {
+    return localStorage.getItem('aco_theme') || 'dark';
+  });
+
+  useEffect(() => {
+    localStorage.setItem('aco_theme', theme);
+    const root = document.documentElement;
+    if (theme === 'dark') {
+      root.classList.add('dark');
+      root.classList.remove('light');
+    } else {
+      root.classList.remove('dark');
+      root.classList.add('light');
+    }
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme(prev => (prev === 'dark' ? 'light' : 'dark'));
+  };
+
+  // Formatador de Data/Hora no Timezone Oficial do Brasil (America/Sao_Paulo / UTC-3)
+  const formatDateTimeBR = (isoOrDate) => {
+    if (!isoOrDate) return '-';
+    try {
+      const d = new Date(isoOrDate);
+      if (isNaN(d.getTime())) {
+        return String(isoOrDate);
+      }
+      return d.toLocaleString('pt-BR', {
+        timeZone: 'America/Sao_Paulo',
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+      });
+    } catch (e) {
+      return String(isoOrDate);
+    }
+  };
+
   // Renomear URL HTTPS
   const [newSlugValue, setNewSlugValue] = useState('');
   const [newCustomDomainValue, setNewCustomDomainValue] = useState('');
@@ -61,11 +105,23 @@ export default function App() {
     autoDeploy: true,
     gitToken: '',
     cronSchedule: '',
-    cronCommand: ''
+    cronCommand: '',
+    createDatabase: false,
+    databaseEngine: 'mariadb',
+    initialSqlFile: '',
+    initialSql: ''
   });
   const [slugManuallyEdited, setSlugManuallyEdited] = useState(false);
   const [deploying, setDeploying] = useState(false);
   const [deployResult, setDeployResult] = useState(null);
+
+  // Banco de Dados no Card do Projeto (Aba 'database')
+  const [projectSqlScript, setProjectSqlScript] = useState('');
+  const [projectSqlFilePath, setProjectSqlFilePath] = useState('');
+  const [executingProjectSql, setExecutingProjectSql] = useState(false);
+  const [projectSqlFeedback, setProjectSqlFeedback] = useState(null);
+  const [newProjectDbEngine, setNewProjectDbEngine] = useState('mariadb');
+  const [creatingProjectDb, setCreatingProjectDb] = useState(false);
 
   // Cron State
   const [projectCron, setProjectCron] = useState({ enabled: false, schedule: '* * * * *', command: '', recentLogs: '' });
@@ -725,6 +781,87 @@ export default function App() {
     }
   };
 
+  // Executar Script SQL diretamente no banco vinculado ao projeto
+  const handleExecuteProjectSql = async (dbSlug) => {
+    if (!dbSlug) {
+      showToastMsg('Nenhum banco de dados selecionado.', 'error');
+      return;
+    }
+    if (!projectSqlScript.trim() && !projectSqlFilePath.trim()) {
+      showToastMsg('Informe um script SQL ou o caminho de um arquivo .sql', 'error');
+      return;
+    }
+    try {
+      setExecutingProjectSql(true);
+      setProjectSqlFeedback(null);
+      const res = await authFetch(`/api/databases/${dbSlug}/import-sql`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sqlContent: projectSqlScript,
+          sqlFilePath: projectSqlFilePath
+        })
+      });
+      const json = await res.json();
+      if (json.status === 'success' || json.ok) {
+        setProjectSqlFeedback({
+          success: true,
+          message: json.message || 'Script SQL executado com sucesso!',
+          tablesCount: json.tablesCount,
+          timeMs: json.timeMs
+        });
+        showToastMsg('Script SQL executado com sucesso!');
+        await fetchOverview();
+      } else {
+        setProjectSqlFeedback({
+          success: false,
+          message: json.message || 'Erro ao executar script SQL'
+        });
+        showToastMsg(json.message || 'Erro ao executar SQL', 'error');
+      }
+    } catch (err) {
+      setProjectSqlFeedback({
+        success: false,
+        message: err.message
+      });
+      showToastMsg(err.message, 'error');
+    } finally {
+      setExecutingProjectSql(false);
+    }
+  };
+
+  // Criar e vincular banco ao projeto em 1-Clique (com injeção automática no .env)
+  const handleCreateAndInjectProjectDb = async (projectSlug) => {
+    if (!projectSlug) return;
+    try {
+      setCreatingProjectDb(true);
+      setProjectSqlFeedback(null);
+      const res = await authFetch(`/api/projects/${projectSlug}/database/create-and-inject`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          engine: newProjectDbEngine,
+          initialSql: projectSqlScript,
+          initialSqlFile: projectSqlFilePath
+        })
+      });
+      const json = await res.json();
+      if (json.status === 'success' || json.ok) {
+        showToastMsg(`Banco de dados provisionado e injetado no .env!`);
+        await fetchOverview();
+        if (projectTab === 'env') {
+          await fetchProjectRealEnv(projectSlug);
+        }
+      } else {
+        showToastMsg(json.message || 'Falha ao provisionar banco para o projeto', 'error');
+      }
+    } catch (err) {
+      showToastMsg(err.message, 'error');
+    } finally {
+      setCreatingProjectDb(false);
+    }
+  };
+
   // Caçador ARM
   const handleHunterAction = async (endpoint) => {
     try {
@@ -899,6 +1036,18 @@ export default function App() {
               }`}
             >
               <FolderGit2 className="w-3.5 h-3.5 text-yellow-400 shrink-0" /> Árvore de Arquivos
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setProjectTab('database')}
+              className={`px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer whitespace-nowrap ${
+                projectTab === 'database'
+                  ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 font-bold'
+                  : 'bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              <Database className="w-3.5 h-3.5 text-indigo-400 shrink-0" /> Banco de Dados 1-Clique
             </button>
           </div>
 
@@ -1176,7 +1325,7 @@ export default function App() {
 
                               <div className="flex items-center gap-3 text-[11px] text-slate-400 font-mono whitespace-nowrap shrink-0">
                                 <span>⏱️ {dep.durationSec || dep.durationSeconds || 1}s</span>
-                                <span>📅 {dep.timestamp ? dep.timestamp.split('T')[0] : 'Hoje'}</span>
+                                <span>📅 {formatDateTimeBR(dep.timestamp)}</span>
                               </div>
                             </div>
 
@@ -1503,6 +1652,244 @@ export default function App() {
                   </div>
                 </div>
               )}
+
+              {/* ABA 7: BANCO DE DADOS 1-CLIQUE DO PROJETO */}
+              {projectTab === 'database' && (() => {
+                const boundDb = databases.find(d => 
+                  (activeProject.databaseSlug && d.slug === activeProject.databaseSlug) ||
+                  d.slug === activeProject.slug ||
+                  d.name === activeProject.slug ||
+                  (activeProject.databaseSlug && d.name === activeProject.databaseSlug)
+                );
+
+                return (
+                  <div className="bg-slate-950/80 border border-slate-800 rounded-xl p-4 sm:p-5 space-y-4">
+                    {boundDb ? (
+                      <div className="space-y-4">
+                        {/* Header do Banco Vinculado */}
+                        <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-800">
+                          <div className="flex items-center gap-3">
+                            <div className="p-2.5 rounded-xl bg-indigo-500/15 text-indigo-400 border border-indigo-500/30">
+                              <Database className="w-5 h-5" />
+                            </div>
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <h3 className="text-sm font-bold text-white">{boundDb.name}</h3>
+                                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase bg-indigo-500/15 text-indigo-300 border border-indigo-500/30">
+                                  {boundDb.engineLabel || boundDb.engine}
+                                </span>
+                                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 flex items-center gap-1">
+                                  <CheckCircle2 className="w-3 h-3" /> Conectado ao .env
+                                </span>
+                              </div>
+                              <p className="text-[11px] text-slate-400 mt-0.5">
+                                Host: <span className="font-mono text-slate-300">{boundDb.host}</span> • Porta: <span className="font-mono text-slate-300">{boundDb.port}</span> • Banco: <span className="font-mono text-indigo-300">{boundDb.database}</span>
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setSelectedDbName(boundDb.name || boundDb.slug);
+                                setActiveNav('databases');
+                              }}
+                              className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-200 flex items-center gap-1.5 transition cursor-pointer"
+                            >
+                              <Table className="w-3.5 h-3.5 text-indigo-400" /> Explorar Tabelas
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* String de Conexão */}
+                        <div className="p-3 bg-slate-900 border border-slate-800 rounded-xl space-y-1.5">
+                          <div className="flex items-center justify-between text-xs">
+                            <span className="text-slate-400 font-medium flex items-center gap-1.5">
+                              <Key className="w-3.5 h-3.5 text-amber-400" /> Variável DATABASE_URL (.env)
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => copyToClipboard(boundDb.connectionSnippet || boundDb.databaseUrl, 'DATABASE_URL')}
+                              className="text-cyan-400 hover:text-cyan-300 text-xs font-medium flex items-center gap-1 cursor-pointer"
+                            >
+                              <Copy className="w-3.5 h-3.5" /> Copiar String de Conexão
+                            </button>
+                          </div>
+                          <div className="p-2.5 bg-black/60 rounded-lg font-mono text-xs text-amber-300 border border-slate-800/80 break-all select-all">
+                            {boundDb.connectionSnippet || boundDb.databaseUrl}
+                          </div>
+                        </div>
+
+                        {/* Importar e Executar Script SQL (.sql) */}
+                        <div className="p-4 bg-slate-900/60 border border-slate-800 rounded-xl space-y-3">
+                          <div className="flex flex-wrap items-center justify-between gap-2">
+                            <div>
+                              <h4 className="text-xs font-bold uppercase tracking-wider text-cyan-400 flex items-center gap-1.5">
+                                <FileCode className="w-4 h-4 text-cyan-400" /> Executar / Importar Script SQL (.sql)
+                              </h4>
+                              <p className="text-[11px] text-slate-400">
+                                Importe DDL/DML, crie tabelas e popule dados iniciais no banco "{boundDb.name}".
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <div>
+                              <label className="block text-xs text-slate-400 mb-1">
+                                Caminho do Arquivo .sql no Projeto (Opcional)
+                              </label>
+                              <input
+                                type="text"
+                                placeholder="Ex: schema.sql ou /var/www/projects/..."
+                                value={projectSqlFilePath}
+                                onChange={(e) => setProjectSqlFilePath(e.target.value)}
+                                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white font-mono focus:outline-none focus:border-cyan-500"
+                              />
+                            </div>
+                            <div className="flex items-end">
+                              <button
+                                type="button"
+                                disabled={executingProjectSql}
+                                onClick={() => handleExecuteProjectSql(boundDb.slug)}
+                                className="w-full py-2 px-4 rounded-xl bg-gradient-to-r from-cyan-500 to-indigo-600 hover:from-cyan-400 hover:to-indigo-500 text-slate-950 font-bold text-xs flex items-center justify-center gap-2 transition cursor-pointer disabled:opacity-50 shadow-lg shadow-cyan-500/10"
+                              >
+                                {executingProjectSql ? (
+                                  <>
+                                    <RefreshCw className="w-3.5 h-3.5 animate-spin" /> Executando no Banco...
+                                  </>
+                                ) : (
+                                  <>
+                                    <Play className="w-3.5 h-3.5 fill-current" /> ⚡ Executar Script no Banco
+                                  </>
+                                )}
+                              </button>
+                            </div>
+                          </div>
+
+                          <div>
+                            <label className="block text-xs text-slate-400 mb-1">
+                              Ou Cole os Comandos SQL Diretamente
+                            </label>
+                            <textarea
+                              rows={5}
+                              placeholder={"CREATE TABLE IF NOT EXISTS exemplo (\n  id INT AUTO_INCREMENT PRIMARY KEY,\n  nome VARCHAR(255) NOT NULL\n);\nINSERT INTO exemplo (nome) VALUES ('Item Teste');"}
+                              value={projectSqlScript}
+                              onChange={(e) => setProjectSqlScript(e.target.value)}
+                              className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs font-mono text-emerald-300 focus:outline-none focus:border-cyan-500 leading-relaxed"
+                            />
+                          </div>
+
+                          {projectSqlFeedback && (
+                            <div className={`p-3 rounded-xl text-xs flex items-start gap-2.5 ${
+                              projectSqlFeedback.success
+                                ? 'bg-emerald-500/15 border border-emerald-500/30 text-emerald-300'
+                                : 'bg-red-500/15 border border-red-500/30 text-red-300'
+                            }`}>
+                              {projectSqlFeedback.success ? (
+                                <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+                              ) : (
+                                <AlertTriangle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
+                              )}
+                              <div>
+                                <p className="font-semibold">{projectSqlFeedback.message}</p>
+                                {projectSqlFeedback.tablesCount !== undefined && (
+                                  <p className="text-[10px] text-slate-400 mt-0.5">
+                                    Tabelas no banco agora: {projectSqlFeedback.tablesCount} • Tempo: {projectSqlFeedback.timeMs}ms
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ) : (
+                      /* Nenhum Banco Vinculado: Card 1-Clique para Criar */
+                      <div className="space-y-4">
+                        <div className="p-5 rounded-2xl bg-gradient-to-br from-indigo-950/40 via-slate-900 to-slate-950 border border-indigo-500/30 space-y-3">
+                          <div className="flex items-center gap-3">
+                            <div className="p-3 rounded-xl bg-indigo-500/20 text-indigo-400 border border-indigo-500/40">
+                              <Database className="w-6 h-6" />
+                            </div>
+                            <div>
+                              <h3 className="text-sm font-bold text-white">
+                                Provisionar Banco de Dados 1-Clique para "{activeProject.name}"
+                              </h3>
+                              <p className="text-xs text-slate-400 mt-0.5">
+                                Crie instantaneamente um banco isolado para este projeto e injete a <span className="text-amber-300 font-mono">DATABASE_URL</span> no <span className="text-cyan-300 font-mono">.env</span> automaticamente.
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-2">
+                            <div>
+                              <label className="block text-xs text-slate-400 mb-1">Motor do Banco</label>
+                              <select
+                                value={newProjectDbEngine}
+                                onChange={(e) => setNewProjectDbEngine(e.target.value)}
+                                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500"
+                              >
+                                <option value="mariadb">🐬 MariaDB / MySQL (Padrão SENAI)</option>
+                                <option value="postgres">🐘 PostgreSQL 16</option>
+                                <option value="sqlite">📁 SQLite 3 (Arquivo Local)</option>
+                              </select>
+                            </div>
+
+                            <div className="md:col-span-2">
+                              <label className="block text-xs text-slate-400 mb-1">
+                                Script SQL Inicial no Projeto (Opcional)
+                              </label>
+                              <input
+                                type="text"
+                                placeholder="Ex: schema.sql ou banco.sql (vazio para banco limpo)"
+                                value={projectSqlFilePath}
+                                onChange={(e) => setProjectSqlFilePath(e.target.value)}
+                                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white font-mono focus:outline-none focus:border-indigo-500"
+                              />
+                            </div>
+                          </div>
+
+                          <div>
+                            <label className="block text-xs text-slate-400 mb-1">
+                              Ou Cole DDL / DML Inicial (Opcional)
+                            </label>
+                            <textarea
+                              rows={3}
+                              placeholder="CREATE TABLE usuarios (...); INSERT INTO ..."
+                              value={projectSqlScript}
+                              onChange={(e) => setProjectSqlScript(e.target.value)}
+                              className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs font-mono text-emerald-300 focus:outline-none focus:border-indigo-500"
+                            />
+                          </div>
+
+                          <div className="flex items-center justify-between pt-2">
+                            <span className="text-xs text-slate-400">
+                              Nome sugerido para o banco: <span className="font-mono text-indigo-300">{activeProject.slug}</span>
+                            </span>
+
+                            <button
+                              type="button"
+                              disabled={creatingProjectDb}
+                              onClick={() => handleCreateAndInjectProjectDb(activeProject.slug)}
+                              className="py-2.5 px-5 rounded-xl bg-gradient-to-r from-indigo-500 to-cyan-500 hover:from-indigo-400 hover:to-cyan-400 text-slate-950 font-bold text-xs flex items-center gap-2 transition cursor-pointer disabled:opacity-50 shadow-lg shadow-indigo-500/20"
+                            >
+                              {creatingProjectDb ? (
+                                <>
+                                  <RefreshCw className="w-3.5 h-3.5 animate-spin" /> Provisionando...
+                                </>
+                              ) : (
+                                <>
+                                  <Zap className="w-3.5 h-3.5 fill-current" /> Criar Banco & Injetar no .env
+                                </>
+                              )}
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
         </div>
       </div>
     );
@@ -1755,6 +2142,26 @@ export default function App() {
           </div>
 
           <div className="flex items-center gap-2 shrink-0">
+            {/* Badge Timezone Brasil */}
+            <div className="hidden lg:flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-slate-900 border border-slate-800 text-[11px] font-mono text-slate-300">
+              <Clock className="w-3.5 h-3.5 text-cyan-400" />
+              <span>America/Sao_Paulo (UTC-3)</span>
+            </div>
+
+            {/* Alternador de Tema Light / Dark */}
+            <button
+              type="button"
+              onClick={toggleTheme}
+              className="p-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-200 transition cursor-pointer shrink-0"
+              title={theme === 'dark' ? 'Mudar para Tema Claro' : 'Mudar para Tema Escuro'}
+            >
+              {theme === 'dark' ? (
+                <Sun className="w-4 h-4 text-amber-400" />
+              ) : (
+                <Moon className="w-4 h-4 text-indigo-400" />
+              )}
+            </button>
+
             {activeNav === 'projects' && (
               <button
                 onClick={() => setShowNewProjectModal(true)}
@@ -2790,6 +3197,71 @@ export default function App() {
                         className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white font-mono focus:outline-none focus:border-cyan-500"
                       />
                     </div>
+                  </div>
+
+                  {/* Seção Banco de Dados 1-Clique na Publicação */}
+                  <div className="p-3 bg-slate-950/80 border border-slate-800 rounded-xl space-y-2.5">
+                    <div className="flex items-center justify-between">
+                      <label className="flex items-center gap-2 cursor-pointer text-xs font-semibold text-white">
+                        <input
+                          type="checkbox"
+                          checked={deployForm.createDatabase}
+                          onChange={(e) => setDeployForm({ ...deployForm, createDatabase: e.target.checked })}
+                          className="w-4 h-4 rounded border-slate-700 accent-indigo-500 cursor-pointer"
+                        />
+                        <span className="flex items-center gap-1.5 text-indigo-300">
+                          <Database className="w-4 h-4 text-indigo-400" /> Provisionar Banco de Dados 1-Clique
+                        </span>
+                      </label>
+                      <span className="text-[10px] text-slate-400 font-mono">
+                        Auto-Inject DATABASE_URL
+                      </span>
+                    </div>
+
+                    {deployForm.createDatabase && (
+                      <div className="pt-2 border-t border-slate-800 space-y-2.5 animate-in fade-in duration-150">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                          <div>
+                            <label className="block text-[11px] text-slate-400 mb-1">Motor do Banco</label>
+                            <select
+                              value={deployForm.databaseEngine}
+                              onChange={(e) => setDeployForm({ ...deployForm, databaseEngine: e.target.value })}
+                              className="w-full bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-indigo-500"
+                            >
+                              <option value="mariadb">🐬 MariaDB / MySQL (Padrão SENAI)</option>
+                              <option value="postgres">🐘 PostgreSQL 16</option>
+                              <option value="sqlite">📁 SQLite 3</option>
+                            </select>
+                          </div>
+
+                          <div>
+                            <label className="block text-[11px] text-slate-400 mb-1">Arquivo .sql no Repositório (Opcional)</label>
+                            <input
+                              type="text"
+                              placeholder="Ex: schema.sql ou banco.sql"
+                              value={deployForm.initialSqlFile}
+                              onChange={(e) => setDeployForm({ ...deployForm, initialSqlFile: e.target.value })}
+                              className="w-full bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-white font-mono focus:outline-none focus:border-indigo-500"
+                            />
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="block text-[11px] text-slate-400 mb-1">Ou Cole os Comandos DDL / DML (Opcional)</label>
+                          <textarea
+                            rows={2}
+                            placeholder="CREATE TABLE IF NOT EXISTS ..."
+                            value={deployForm.initialSql}
+                            onChange={(e) => setDeployForm({ ...deployForm, initialSql: e.target.value })}
+                            className="w-full bg-slate-900 border border-slate-800 rounded-lg p-2 text-xs text-emerald-300 font-mono focus:outline-none focus:border-indigo-500"
+                          />
+                        </div>
+
+                        <p className="text-[10px] text-slate-400">
+                          💡 O A.C.O. criará o banco, executará o script SQL e injetará as credenciais completas em <span className="text-amber-300 font-mono">DATABASE_URL</span> no arquivo <span className="text-cyan-300 font-mono">.env</span>.
+                        </p>
+                      </div>
+                    )}
                   </div>
 
                   {/* Variáveis .env + Auto Deploy Toggle */}
