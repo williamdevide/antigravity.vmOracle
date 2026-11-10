@@ -31,3 +31,4 @@
 
 O script determinístico da Camada 3 está em `execution/deploy_student_project.sh`.
 Ele automatiza os 12 passos de instalação, provisionamento do banco, clone do git, injeção de `.env`, configuração do Caddy e registro do card no dashboard do A.C.O.
+

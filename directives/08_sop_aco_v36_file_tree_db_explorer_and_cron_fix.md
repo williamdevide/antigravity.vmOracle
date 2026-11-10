@@ -37,3 +37,4 @@
   * Novo painel **"Explorador de Banco de Dados"** na seção de Bancos de Dados.
 * **Camada 3 (`execution/apply_aco_v36_update.sh`):**
   * Script de 1 comando para compilar e ativar o A.C.O. v3.6.0 na VM.
+
