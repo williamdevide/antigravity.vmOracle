@@ -347,6 +347,21 @@ def delete_database(slug: str) -> dict[str, Any]:
 
     dbs = [d for d in dbs if d.get("slug") != clean]
     save_databases(dbs)
+
+    # Desvincular de quaisquer projetos registrados no A.C.O.
+    try:
+        from execution.deploy_project import load_projects, save_projects
+        projs = load_projects()
+        changed = False
+        for p in projs:
+            if p.get("databaseSlug") == clean or p.get("databaseSlug") == target.get("dbName"):
+                p["databaseSlug"] = None
+                changed = True
+        if changed:
+            save_projects(projs)
+    except Exception:
+        pass
+
     return {"deleted": clean, "remaining": len(dbs)}
 
 

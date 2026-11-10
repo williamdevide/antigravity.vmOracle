@@ -231,7 +231,9 @@ class DeployRequest(BaseModel):
 
 class ImportSqlRequest(BaseModel):
     sql: str = Field(default="", description="Script SQL em texto")
+    sqlContent: str = Field(default="", description="Alias para Script SQL em texto")
     filePath: str = Field(default="", description="Caminho do arquivo .sql no servidor")
+    sqlFilePath: str = Field(default="", description="Alias para Caminho do arquivo .sql no servidor")
 
 
 class ProjectDatabaseRequest(BaseModel):
@@ -895,7 +897,9 @@ def import_sql_endpoint(
 ):
     """Executa / importa um script .sql para dentro de um banco de dados gerenciado."""
     try:
-        res = db_mgr.import_sql_script(db_slug, sql_content=req.sql, sql_file_path=req.filePath)
+        sql_text = req.sql or req.sqlContent or ""
+        sql_file = req.filePath or req.sqlFilePath or ""
+        res = db_mgr.import_sql_script(db_slug, sql_content=sql_text, sql_file_path=sql_file)
         return {"status": "success", "ok": True, **res}
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e)) from e

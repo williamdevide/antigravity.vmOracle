@@ -465,4 +465,14 @@ e ainda não exibe o banco labw no projeto da labware.
 no card de projeto, quando no formato fechado, quero todos os dados atuais, mas alinhados linha a linha
 ```
 
+---
+
+## Prompt #50 — 2026-11-10 20:12:15 (-03:00)
+
+```text
+/agente-orquestrador /grill-me /goal o banco labw aparece na guia banco de dados do card do projeto labwarenext, reconhece como mariadb e aparece como conectado (se executo a pagina do projeto exibe os dados corretamente). mas na guia de banco de dados em explorar tabela não exibe nada, a string de conexão aparece vazia, e aparece o bloco de baixo para executar/importar script (esse bloco só deve aparecer se não tiver nenhum bd vinculado ao projeto) o que deve aparecer é um botão para excluir o bd e se excluir dai sim volta a aparecer para executar um script. no bloco de executar, no campo com caminho do arquivo .sql deve ser substituido por um campo/botão para carregar arquivo.
+o explorar tabelas deve exibir as tabelas (estruturas e dados) lá na tela de banco de dados, mas exibindo o nome do banco, o tipo de banco e o projeto ao qual esta vinculado
+```
+
+
 
