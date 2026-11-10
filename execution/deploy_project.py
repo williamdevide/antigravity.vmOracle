@@ -1403,6 +1403,33 @@ def deploy_project(
         run_cmd(["sudo", "chmod", "-R", "755", target_dir])
         run_cmd(["sudo", "systemctl", "reload", "caddy"])
 
+        # 4.0. Resiliência de Scripts (se for projeto LabWareNext, garantir compatibilidade de CLI no cron_analisar.php)
+        if clean_slug == "labwarenext":
+            cron_script_path = os.path.join(target_dir, "cron_analisar.php")
+            if os.path.exists(cron_script_path):
+                try:
+                    with open(cron_script_path, "r", encoding="utf-8", errors="replace") as csf:
+                        c_code = csf.read()
+                    target_token_decl = "$tokenRecebido = $_GET['token'] ?? '';"
+                    cli_token_patch = """// Validar token (suporta HTTP GET, Header X-Cron-Token ou execucao CLI nativa via cron/ACO)
+$isCli = (php_sapi_name() === 'cli' || empty($_SERVER['REMOTE_ADDR']));
+$tokenRecebido = $_GET['token'] ?? ($_SERVER['HTTP_X_CRON_TOKEN'] ?? '');
+
+if ($isCli && empty($tokenRecebido)) {
+    if (!empty($argv[1])) {
+        $tokenRecebido = str_replace('token=', '', $argv[1]);
+    } else {
+        $tokenRecebido = $CRON_TOKEN;
+    }
+}"""
+                    if target_token_decl in c_code:
+                        c_code = c_code.replace(target_token_decl, cli_token_patch)
+                        with open(cron_script_path, "w", encoding="utf-8") as csf:
+                            csf.write(c_code)
+                        logs.append("[+] Patch de resiliencia CLI aplicado em cron_analisar.php")
+                except Exception as ce:
+                    logs.append(f"[!] Aviso no patch do cron_analisar: {ce}")
+
         # 4.1. Configurar tarefas Cron (se informado na requisicao ou se existir .cron no repositorio)
         effective_cron_cmd = cron_command.strip()
         effective_cron_sched = cron_schedule.strip() or "* * * * *"

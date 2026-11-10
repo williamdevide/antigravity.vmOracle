@@ -482,6 +482,15 @@ o explorar tabelas deve exibir as tabelas (estruturas e dados) lá na tela de ba
 /agente-orquestrador /grill-me /goal quando tentei fazer um deploy manual para esse projeto apareceu: Falha no deploy: Comando falhou (exit 128): error: could not lock config file .git/config: Permission denied fatal: could not set 'remote.origin.url' to 'https://github.com/Antonio-augustos2/CTDS-2026-02-Sistema-LabWareNext-Antonio-Isabelle-Nicolle.git'
 ```
 
+---
+
+## Prompt #52 — 2026-11-10 20:36:25 (-03:00)
+
+```text
+/agente-orquestrador o cron voltou a dar erro {"error":"Token inv\u00e1lido ou n\u00e3o fornecido","timestamp":"2026-11-10 23:30:01"} e nas tabelas a tabela candidato diz ter 4 registros mas se clico nela não aparece dado nenhum.
+```
+
+
 
 
 

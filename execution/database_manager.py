@@ -445,7 +445,7 @@ def get_table_schema(db_name: str, table_name: str) -> list[dict[str, Any]]:
 
 
 def get_table_data(db_name: str, table_name: str, limit: int = 50, offset: int = 0) -> dict[str, Any]:
-    """Retorna os registros de uma tabela em formato JSON com paginacao."""
+    """Retorna os registros de uma tabela em formato JSON com paginacao e tratamento seguro de BLOBs/Binarios."""
     clean_db = re.sub(r"[^a-zA-Z0-9_]", "", db_name.strip()) or "labw"
     clean_table = re.sub(r"[^a-zA-Z0-9_]", "", table_name.strip())
     if not clean_table:
@@ -458,17 +458,30 @@ def get_table_data(db_name: str, table_name: str, limit: int = 50, offset: int =
     count_sql = f"SELECT COUNT(*) FROM `{clean_db}`.`{clean_table}`;"
     total = 0
     try:
-        c_res = subprocess.run(["sudo", "mysql", "-e", count_sql, "-sN"], stdout=subprocess.PIPE, text=True, timeout=5)
+        c_res = subprocess.run(["sudo", "mysql", "-e", count_sql, "-sN"], stdout=subprocess.PIPE, text=True, errors="replace", timeout=5)
         if c_res.stdout.strip().isdigit():
             total = int(c_res.stdout.strip())
     except Exception:
         pass
 
-    # 2. Registros da tabela
-    data_sql = f"SELECT * FROM `{clean_db}`.`{clean_table}` LIMIT {safe_limit} OFFSET {safe_offset};"
+    # 2. Obter colunas e identificar tipos BLOB / binários para projetar de forma legível
+    schema_cols = get_table_schema(clean_db, clean_table)
+    col_projections = []
+    for col in schema_cols:
+        c_name = col.get("field", "")
+        c_type = (col.get("type") or "").lower()
+        if any(b in c_type for b in ["blob", "binary", "varbinary"]):
+            col_projections.append(f"CONCAT('[BLOB: ', COALESCE(LENGTH(`{c_name}`), 0), ' bytes]') AS `{c_name}`")
+        else:
+            col_projections.append(f"`{c_name}`")
+
+    select_expr = ", ".join(col_projections) if col_projections else "*"
+
+    # 3. Registros da tabela
+    data_sql = f"SELECT {select_expr} FROM `{clean_db}`.`{clean_table}` LIMIT {safe_limit} OFFSET {safe_offset};"
     cmd = ["sudo", "mysql", "-e", data_sql, "-B"]
     try:
-        res = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, timeout=10)
+        res = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, errors="replace", timeout=10)
         if res.returncode != 0:
             return {"columns": [], "rows": [], "total": total}
         lines = res.stdout.strip().splitlines()
@@ -478,7 +491,7 @@ def get_table_data(db_name: str, table_name: str, limit: int = 50, offset: int =
         rows = []
         for line in lines[1:]:
             parts = line.split("\t")
-            # Truncar campos muito longos para performance
+            # Truncar campos de texto muito longos para performance
             row_dict = {}
             for col, val in zip(columns, parts):
                 row_dict[col] = (val[:300] + "...") if len(val) > 300 else val
