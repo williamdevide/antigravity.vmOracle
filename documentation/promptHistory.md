@@ -294,6 +294,16 @@ considerando nossa urgencia criei uma pasta projeto aluno onde esta o link do re
 o link do projeto abriu, mas ao inves de exibir o projeto apareceu: Serviço temporariamente indisponível.
 ```
 
+---
+
+## Prompt #36 — 2026-11-10 11:23:43 (-03:00)
+
+```text
+o endereço https://labware.147.15.2.73.sslip.io/ não exibe nada.
+e o endereço https://labwarenext.147.15.2.73.sslip.io/ ainda exibe Serviço temporariamente indisponível.
+```
+
+
 
 
 
