@@ -963,101 +963,90 @@ export default function App() {
     if (!activeProject) return null;
     return (
       <div className="border-t border-slate-800 bg-slate-950/70 p-4 sm:p-5 space-y-4 animate-in fade-in duration-150">
-        {/* Abas de Navegação do Projeto */}
-        <div className="flex items-center justify-between gap-2 pb-2.5 border-b border-slate-800 bg-slate-950/40 shrink-0 overflow-x-auto">
-          <div className="flex items-center gap-1.5 overflow-x-auto">
-            <button
-              type="button"
-              onClick={() => setProjectTab('controls')}
-              className={`px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer whitespace-nowrap ${
-                projectTab === 'controls'
-                  ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 font-bold'
-                  : 'bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-slate-200'
-              }`}
-            >
-              <Settings className="w-3.5 h-3.5 shrink-0" /> Configurações & Ações
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setProjectTab('env')}
-              className={`px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer whitespace-nowrap ${
-                projectTab === 'env'
-                  ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 font-bold'
-                  : 'bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-slate-200'
-              }`}
-            >
-              <Key className="w-3.5 h-3.5 text-amber-400 shrink-0" /> Variáveis (.env)
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setProjectTab('deployments')}
-              className={`px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer whitespace-nowrap ${
-                projectTab === 'deployments'
-                  ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 font-bold'
-                  : 'bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-slate-200'
-              }`}
-            >
-              <GitCommit className="w-3.5 h-3.5 text-indigo-400 shrink-0" /> Histórico ({activeProject.deploymentsHistory?.length || 0})
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setProjectTab('logs')}
-              className={`px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer whitespace-nowrap ${
-                projectTab === 'logs'
-                  ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 font-bold'
-                  : 'bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-slate-200'
-              }`}
-            >
-              <Terminal className="w-3.5 h-3.5 text-emerald-400 shrink-0" /> Logs em Tempo Real
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setProjectTab('cron')}
-              className={`px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer whitespace-nowrap ${
-                projectTab === 'cron'
-                  ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 font-bold'
-                  : 'bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-slate-200'
-              }`}
-            >
-              <Clock className="w-3.5 h-3.5 text-cyan-400 shrink-0" /> Cron / Agendamentos
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setProjectTab('files')}
-              className={`px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer whitespace-nowrap ${
-                projectTab === 'files'
-                  ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 font-bold'
-                  : 'bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-slate-200'
-              }`}
-            >
-              <FolderGit2 className="w-3.5 h-3.5 text-yellow-400 shrink-0" /> Árvore de Arquivos
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setProjectTab('database')}
-              className={`px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer whitespace-nowrap ${
-                projectTab === 'database'
-                  ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 font-bold'
-                  : 'bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-slate-200'
-              }`}
-            >
-              <Database className="w-3.5 h-3.5 text-indigo-400 shrink-0" /> Banco de Dados 1-Clique
-            </button>
-          </div>
+        {/* Abas de Navegação do Projeto (Textos Concisos & Design Clean) */}
+        <div className="flex items-center gap-1.5 pb-2.5 border-b border-slate-800 bg-slate-950/40 overflow-x-auto">
+          <button
+            type="button"
+            onClick={() => setProjectTab('controls')}
+            className={`px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer whitespace-nowrap ${
+              projectTab === 'controls'
+                ? 'bg-blue-600/20 text-blue-400 border border-blue-500/30 font-bold'
+                : 'bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            <Settings className="w-3.5 h-3.5 shrink-0" /> Config
+          </button>
 
           <button
             type="button"
-            onClick={() => setActiveProjectSlug(null)}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition text-xs flex items-center gap-1 shrink-0 cursor-pointer"
-            title="Recolher painel"
+            onClick={() => setProjectTab('env')}
+            className={`px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer whitespace-nowrap ${
+              projectTab === 'env'
+                ? 'bg-blue-600/20 text-blue-400 border border-blue-500/30 font-bold'
+                : 'bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-slate-200'
+            }`}
           >
-            <X className="w-3.5 h-3.5" /> <span className="hidden sm:inline">Recolher</span>
+            <Key className="w-3.5 h-3.5 text-amber-400 shrink-0" /> .env
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setProjectTab('deployments')}
+            className={`px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer whitespace-nowrap ${
+              projectTab === 'deployments'
+                ? 'bg-blue-600/20 text-blue-400 border border-blue-500/30 font-bold'
+                : 'bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            <GitCommit className="w-3.5 h-3.5 text-indigo-400 shrink-0" /> Histórico ({activeProject.deploymentsHistory?.length || 0})
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setProjectTab('logs')}
+            className={`px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer whitespace-nowrap ${
+              projectTab === 'logs'
+                ? 'bg-blue-600/20 text-blue-400 border border-blue-500/30 font-bold'
+                : 'bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            <Terminal className="w-3.5 h-3.5 text-emerald-400 shrink-0" /> Logs
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setProjectTab('cron')}
+            className={`px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer whitespace-nowrap ${
+              projectTab === 'cron'
+                ? 'bg-blue-600/20 text-blue-400 border border-blue-500/30 font-bold'
+                : 'bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            <Clock className="w-3.5 h-3.5 text-cyan-400 shrink-0" /> Cron
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setProjectTab('files')}
+            className={`px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer whitespace-nowrap ${
+              projectTab === 'files'
+                ? 'bg-blue-600/20 text-blue-400 border border-blue-500/30 font-bold'
+                : 'bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            <FolderGit2 className="w-3.5 h-3.5 text-yellow-400 shrink-0" /> Arquivos
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setProjectTab('database')}
+            className={`px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer whitespace-nowrap ${
+              projectTab === 'database'
+                ? 'bg-blue-600/20 text-blue-400 border border-blue-500/30 font-bold'
+                : 'bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            <Database className="w-3.5 h-3.5 text-indigo-400 shrink-0" /> Banco de Dados
           </button>
         </div>
 
@@ -1656,10 +1645,15 @@ export default function App() {
               {/* ABA 7: BANCO DE DADOS 1-CLIQUE DO PROJETO */}
               {projectTab === 'database' && (() => {
                 const boundDb = databases.find(d => 
-                  (activeProject.databaseSlug && d.slug === activeProject.databaseSlug) ||
+                  (activeProject.databaseSlug && (d.slug === activeProject.databaseSlug || d.dbName === activeProject.databaseSlug)) ||
+                  (activeProject.database_slug && (d.slug === activeProject.database_slug || d.dbName === activeProject.database_slug)) ||
+                  d.projectSlug === activeProject.slug ||
+                  d.project_slug === activeProject.slug ||
                   d.slug === activeProject.slug ||
-                  d.name === activeProject.slug ||
-                  (activeProject.databaseSlug && d.name === activeProject.databaseSlug)
+                  d.dbName === activeProject.slug ||
+                  (activeProject.slug === 'labwarenext' && (d.slug === 'labw' || d.dbName === 'labw')) ||
+                  (d.dbName && activeProject.slug && activeProject.slug.toLowerCase().includes(d.dbName.toLowerCase())) ||
+                  (d.slug && activeProject.slug && activeProject.slug.toLowerCase().includes(d.slug.toLowerCase()))
                 );
 
                 return (
@@ -1896,7 +1890,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col lg:flex-row">
+    <div className={`min-h-screen flex flex-col lg:flex-row transition-colors duration-150 ${theme === 'dark' ? 'bg-[#090d16] text-slate-100' : 'bg-slate-50 text-slate-900'}`}>
       {/* Toast Flutuante */}
       {toast && (
         <div className={`fixed bottom-5 right-5 z-[999] px-4 py-3 rounded-xl border shadow-2xl flex items-center gap-2.5 text-xs font-medium backdrop-blur-md transition-all ${
@@ -1917,14 +1911,14 @@ export default function App() {
           {/* Logo & Versão */}
           <div className="flex items-center justify-between pb-4 border-b border-slate-800">
             <div className="flex items-center gap-2.5 min-w-0">
-              <div className="p-2 rounded-xl bg-gradient-to-br from-cyan-500/20 to-indigo-500/20 border border-cyan-500/30 text-cyan-400 shrink-0">
+              <div className="p-2 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-400 shrink-0">
                 <Layers className="w-5 h-5" />
               </div>
               <div className="min-w-0">
                 <div className="flex items-center gap-1.5">
                   <span className="font-bold text-sm tracking-tight text-white whitespace-nowrap">A.C.O.</span>
-                  <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-cyan-500/15 text-cyan-300 border border-cyan-500/30 whitespace-nowrap">
-                    v3.0 Coolify
+                  <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded-md bg-blue-500/15 text-blue-400 border border-blue-500/30 whitespace-nowrap">
+                    Orchestrator
                   </span>
                 </div>
                 <p className="text-[10px] text-slate-400 truncate mt-0.5">Oracle Cloud • {vm.ip || '147.15.2.73'}</p>
@@ -1936,17 +1930,17 @@ export default function App() {
               className="p-1.5 rounded-lg bg-slate-800 text-slate-300 hover:text-white shrink-0"
               title="Atualizar"
             >
-              <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin text-cyan-400' : ''}`} />
+              <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin text-blue-400' : ''}`} />
             </button>
           </div>
 
-          {/* Botão Rápido: Novo Projeto */}
+          {/* Botão Rápido: Novo Projeto (Design Clean Corporativo) */}
           <button
             onClick={() => {
               setActiveNav('projects');
               setShowNewProjectModal(true);
             }}
-            className="mt-4 w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-cyan-500 to-indigo-600 hover:from-cyan-400 hover:to-indigo-500 text-slate-950 font-bold text-xs flex items-center justify-center gap-2 shadow-lg shadow-cyan-500/10 transition cursor-pointer whitespace-nowrap"
+            className="mt-4 w-full py-2.5 px-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs flex items-center justify-center gap-2 shadow-sm transition cursor-pointer whitespace-nowrap"
           >
             <Plus className="w-4 h-4 stroke-[2.5] shrink-0" />
             <span>Novo Projeto</span>
@@ -1984,7 +1978,7 @@ export default function App() {
                 <span className="truncate">Bancos de Dados 1-Clique</span>
               </span>
               <span className="px-1.5 py-0.5 rounded-md text-[10px] bg-slate-800 text-slate-300 font-mono shrink-0">
-                {databases.length}
+                {databases.filter(d => !d.projectSlug && !projects.some(p => p.databaseSlug === d.slug || p.database_slug === d.slug || (d.slug === 'labw' && p.slug === 'labwarenext'))).length}
               </span>
             </button>
 
@@ -2058,28 +2052,9 @@ export default function App() {
           </div>
         </div>
 
-        {/* Informações da Plataforma: Versão e Data de Deploy */}
-        <div className="px-3.5 py-2.5 border-t border-slate-800/80 bg-slate-950/70">
-          <div className="flex items-center justify-between text-[11px] mb-1">
-            <span className="text-slate-400 flex items-center gap-1.5 font-medium">
-              <Rocket className="w-3.5 h-3.5 text-cyan-400 shrink-0" /> Versão
-            </span>
-            <span className="font-mono text-cyan-300 font-semibold bg-cyan-950/60 px-1.5 py-0.5 rounded border border-cyan-800/50 text-[10px]">
-              {data?.acoPlatform?.version || 'v3.5.0'}
-            </span>
-          </div>
-          <div className="flex items-center justify-between text-[10px] text-slate-400">
-            <span className="flex items-center gap-1 text-slate-500">
-              <Clock className="w-3 h-3 text-slate-500 shrink-0" /> Deploy:
-            </span>
-            <span className="font-mono text-slate-300">
-              {data?.acoPlatform?.deployDate || '10/11/2026 08:50'}
-            </span>
-          </div>
-        </div>
-
-        {/* Rodapé: Usuário */}
-        <div className="p-3.5 border-t border-slate-800/80 bg-slate-950/40">
+        {/* Rodapé Integrado: Dados do Usuário + Versão & Deploy */}
+        <div className="p-3 border-t border-slate-800/80 bg-slate-950/60 space-y-2.5">
+          {/* Usuário e Logout */}
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-2 min-w-0">
               {user.photoURL ? (
@@ -2099,6 +2074,16 @@ export default function App() {
             >
               <LogOut className="w-3.5 h-3.5" />
             </button>
+          </div>
+
+          {/* Versão e Data de Deploy integrados e colados aos dados do usuário */}
+          <div className="pt-2 border-t border-slate-800/60 flex items-center justify-between text-[10px] text-slate-400 font-mono">
+            <span className="flex items-center gap-1 text-slate-400">
+              <Rocket className="w-3 h-3 text-cyan-400 shrink-0" /> {data?.acoPlatform?.version || 'v3.5.0'}
+            </span>
+            <span className="flex items-center gap-1 text-slate-400">
+              <Clock className="w-3 h-3 text-slate-500 shrink-0" /> {data?.acoPlatform?.deployDate || '10/11/2026 08:50'}
+            </span>
           </div>
         </div>
       </aside>
@@ -2165,7 +2150,7 @@ export default function App() {
             {activeNav === 'projects' && (
               <button
                 onClick={() => setShowNewProjectModal(true)}
-                className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-cyan-500 to-indigo-600 hover:from-cyan-400 hover:to-indigo-500 text-slate-950 font-bold text-xs flex items-center gap-1.5 shadow-lg transition cursor-pointer whitespace-nowrap"
+                className="px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs flex items-center gap-1.5 shadow-sm transition cursor-pointer whitespace-nowrap"
               >
                 <Plus className="w-4 h-4 stroke-[2.5]" />
                 <span>Publicar Novo</span>
@@ -2474,16 +2459,39 @@ export default function App() {
               </form>
             </div>
 
-            {/* Lista de Bancos Ativos */}
+            {/* Lista de Bancos Avulsos / Autônomos */}
             <div className="lg:col-span-7 space-y-4">
-              {databases.length === 0 ? (
-                <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-10 text-center space-y-2">
-                  <Database className="w-8 h-8 text-slate-600 mx-auto" />
-                  <p className="text-sm font-semibold text-slate-300">Nenhum banco de dados criado ainda</p>
-                  <p className="text-xs text-slate-500">Crie um banco SQLite, PostgreSQL, MySQL ou Redis ao lado em 1 clique.</p>
-                </div>
-              ) : (
-                databases.map((db) => (
+              {(() => {
+                const standaloneDatabases = databases.filter(db => {
+                  const isLinkedToProject = (db.projectSlug && db.projectSlug !== '') ||
+                    projects.some(p => 
+                      p.databaseSlug === db.slug || 
+                      p.database_slug === db.slug || 
+                      p.slug === db.slug ||
+                      (db.slug === 'labw' && p.slug === 'labwarenext') ||
+                      (p.slug && db.slug && p.slug.toLowerCase().includes(db.slug.toLowerCase()))
+                    );
+                  return !isLinkedToProject;
+                });
+
+                if (standaloneDatabases.length === 0) {
+                  return (
+                    <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-10 text-center space-y-3">
+                      <div className="p-3 bg-slate-800/60 rounded-2xl w-fit mx-auto text-slate-400">
+                        <Database className="w-8 h-8 mx-auto text-indigo-400" />
+                      </div>
+                      <h3 className="text-sm font-semibold text-slate-200">Nenhum banco avulso criado</h3>
+                      <p className="text-xs text-slate-400 max-w-md mx-auto leading-relaxed">
+                        Os bancos de dados criados para projetos (como o MariaDB de <span className="font-mono text-cyan-300">labwarenext</span>) ficam integrados diretamente no card da sua aplicação na aba <strong>Projetos</strong>.
+                      </p>
+                      <p className="text-[11px] text-slate-500">
+                        Utilize o formulário ao lado se precisar de uma base de dados autônoma para serviços externos.
+                      </p>
+                    </div>
+                  );
+                }
+
+                return standaloneDatabases.map((db) => (
                   <div key={db.slug} className="bg-slate-900/75 border border-slate-800 rounded-2xl p-4 sm:p-5 space-y-3">
                     <div className="flex flex-wrap items-start justify-between gap-2">
                       <div className="min-w-0">
@@ -2556,8 +2564,8 @@ export default function App() {
                       </div>
                     </div>
                   </div>
-                ))
-              )}
+                ));
+              })()}
             </div>
 
             {/* SEÇÃO: INSPETOR VISUAL DE BANCO DE DADOS (ESTRUTURA E DADOS) */}
@@ -3306,7 +3314,7 @@ export default function App() {
                       <button
                         type="submit"
                         disabled={deploying}
-                        className="px-4 py-2 rounded-xl bg-gradient-to-r from-cyan-500 to-indigo-600 hover:from-cyan-400 hover:to-indigo-500 text-slate-950 font-bold text-xs flex items-center gap-1.5 shadow-lg transition cursor-pointer disabled:opacity-50 whitespace-nowrap"
+                        className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs flex items-center gap-1.5 shadow-sm transition cursor-pointer disabled:opacity-50 whitespace-nowrap"
                       >
                         {deploying ? (
                           <>

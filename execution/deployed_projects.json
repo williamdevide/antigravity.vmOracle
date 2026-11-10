@@ -76,5 +76,46 @@
         "log": "[+] Projeto demo ativo no servidor."
       }
     ]
+  },
+  {
+    "name": "Labwarenext",
+    "slug": "labwarenext",
+    "databaseSlug": "labw",
+    "database_slug": "labw",
+    "customDomain": "",
+    "gitUrl": "https://github.com/Antonio-augustos2/CTDS-2026-02-Sistema-LabWareNext-Antonio-Isabelle-Nicolle.git",
+    "repoUrl": "https://github.com/Antonio-augustos2/CTDS-2026-02-Sistema-LabWareNext-Antonio-Isabelle-Nicolle.git",
+    "projectType": "php",
+    "branch": "main",
+    "startCommand": "",
+    "domain": "labwarenext.147.15.2.73.sslip.io",
+    "url": "https://labwarenext.147.15.2.73.sslip.io",
+    "port": null,
+    "workDir": "/var/www/projects/labwarenext",
+    "autoDeploy": true,
+    "status": "running",
+    "lastCommitShortHash": "98f2c70",
+    "lastCommitHash": "98f2c70",
+    "lastCommitMessage": "deploy final",
+    "lastCommitAuthor": "Antonio Augusto",
+    "envVarsText": "DATABASE_URL=\"mysql://labw:LabWare@2026@127.0.0.1:3306/labw\"\nDB_HOST=\"127.0.0.1\"\nDB_PORT=\"3306\"\nDB_NAME=\"labw\"\nDB_USER=\"labw\"\nDB_PASSWORD=\"LabWare@2026\"",
+    "diskBytes": 15053962,
+    "diskMB": 14.36,
+    "diskFormatted": "14.36 MB",
+    "updatedAt": "2026-11-10T19:15:40-03:00",
+    "lastBuildLog": "[+] Projeto 'Labwarenext' sincronizado e integrado ao painel A.C.O. via reconciliação automática.",
+    "deploymentsHistory": [
+      {
+        "id": "dep-rec-labwarenext",
+        "commitHash": "98f2c70",
+        "commitMessage": "deploy final",
+        "commitAuthor": "Antonio Augusto",
+        "trigger": "reconciliation",
+        "status": "SUCCESS",
+        "timestamp": "2026-11-10T19:15:40-03:00",
+        "durationSeconds": 1.0,
+        "log": "[+] Projeto 'Labwarenext' (labwarenext.147.15.2.73.sslip.io) auto-detectado no servidor e reconciliado com sucesso."
+      }
+    ]
   }
 ]

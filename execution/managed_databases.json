@@ -2,6 +2,7 @@
   {
     "slug": "labw",
     "name": "Banco LabwareNext (labw)",
+    "projectSlug": "labwarenext",
     "engine": "mysql",
     "engineLabel": "MariaDB / MySQL Tuned",
     "host": "127.0.0.1",

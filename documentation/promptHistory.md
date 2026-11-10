@@ -441,3 +441,16 @@ o bd no projeto gera uma string de conexão e o projeto quando é importado deve
 de forma geral, preciso que da proxima vez que um aluno precisar publicar um projeto na minha vm seja rapido e plenamente funcional, sem que eu precise atuar no antigravity para funcionar. talvez seja necessario preencher dados e opções de frontend e backend, mas gostaria de ter o minimo de interação durante a publicação.
 prepare um tema light para nossa plataforma.
 ```
+
+---
+
+## Prompt #48 — 2026-11-10 19:32:53 (-03:00)
+
+```text
+/agente-orquestrador /grill-me /goal o tema claro ainda tem problemas (partes escuras). os botões no card dentro do gerenciar devem ter textos mais curtos e remova o botão recolher na linha dos botões expandidos, já tem esse botão na linha de cima.
+no projeto da labwarenext já deveria existir um banco, mas não foi exibido, verifique.
+em banco de dados 1-clique existe um bd labw (é o banco do meu aluno), mas não deveria exibir aqui, mas sim dentro do card do projeto.
+quero uma estetica com menos cara de IA e mais profissional, utilize o agente de UI/UX e veja como melhorar. 
+deixe a caixa de informação da versão e deploy mais proxima dos dados do user atual
+```
+
