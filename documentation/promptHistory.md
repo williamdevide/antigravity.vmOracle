@@ -372,6 +372,16 @@ esta dando falha ao conectar com a vm
 a mensagem é diretamente no nosso frontend: Falha ao comunicar com a VM
 ```
 
+---
+
+## Prompt #43 — 2026-11-10 17:02:46 (-03:00)
+
+```text
+Warning: Identity file /home/ubuntu/.ssh/oracle_vm.key not accessible: No such file or directory.
+ubuntu@147.15.2.73: Permission denied (publickey).
+```
+
+
 
 
 
