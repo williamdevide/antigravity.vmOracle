@@ -389,6 +389,15 @@ ubuntu@147.15.2.73: Permission denied (publickey).
 tentei fazer o deploy para atualizar a versão do projeto do aluno, mas deu o seguinte erro: Falha no deploy: Comando falhou (exit 128): fatal: detected dubious ownership in repository at '/var/www/projects/labwarenext' To add an exception for this directory, call: git config --global --add safe.directory /var/www/projects/labwarenext
 ```
 
+---
+
+## Prompt #45 — 2026-11-10 17:23:16 (-03:00)
+
+```text
+agora ao carregar o orquestrador aparece Falha ao comunicar com a VM (HTTP 500): {"detail":"Erro interno no overview da VM: [Errno 13] Permission denied: '/opt/antigravity-oracle/execution/deployed_projects.json'"}
+```
+
+
 
 
 

@@ -315,7 +315,10 @@ def reconcile_unindexed_projects(existing_projects: list[dict[str, Any]]) -> lis
         changed = True
 
     if changed:
-        save_projects(existing_projects)
+        try:
+            save_projects(existing_projects)
+        except Exception as e:
+            print(f"[Aviso Reconcile] Nao foi possivel salvar projetos reconciliados: {e}", flush=True)
 
     return existing_projects
 
@@ -333,7 +336,10 @@ def load_projects() -> list[dict[str, Any]]:
             data = []
 
     # Reconcilia projetos que estejam no Caddy ou em /var/www/projects mas nao no JSON
-    data = reconcile_unindexed_projects(data)
+    try:
+        data = reconcile_unindexed_projects(data)
+    except Exception as e:
+        print(f"[Aviso load_projects] Falha ao reconciliar projetos: {e}", flush=True)
 
     for p in data:
         slug = p.get("slug", "")
@@ -406,11 +412,34 @@ def load_projects() -> list[dict[str, Any]]:
 get_deployed_projects = load_projects
 
 
+def safe_write_file(file_path: str, content: str, mode: str = "666") -> None:
+    """Escreve um arquivo de forma segura, com fallback para sudo caso haja PermissionError."""
+    try:
+        with open(file_path, "w", encoding="utf-8") as f:
+            f.write(content)
+        try:
+            subprocess.run(["chmod", mode, file_path], check=False)
+        except Exception:
+            pass
+    except PermissionError:
+        p = subprocess.run(
+            ["sudo", "tee", file_path],
+            input=content,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=10,
+        )
+        if p.returncode != 0:
+            raise RuntimeError(f"Falha ao escrever {file_path} via sudo: {p.stderr}")
+        subprocess.run(["sudo", "chmod", mode, file_path], check=False)
+
+
 def save_projects(projects: list[dict[str, Any]]) -> None:
-    """Salva a lista de projetos publicados no banco JSON."""
+    """Salva a lista de projetos publicados no banco JSON com resiliencia a permissoes."""
     os.makedirs(os.path.dirname(PROJECTS_DB_PATH), exist_ok=True)
-    with open(PROJECTS_DB_PATH, "w", encoding="utf-8") as f:
-        json.dump(projects, f, indent=2, ensure_ascii=False)
+    payload = json.dumps(projects, indent=2, ensure_ascii=False)
+    safe_write_file(PROJECTS_DB_PATH, payload, mode="666")
 
 
 def allocate_port(projects: list[dict[str, Any]], existing_slug: str | None = None) -> int:
@@ -469,24 +498,6 @@ def parse_env_text(env_text: str) -> dict[str, str]:
             result[k] = v
     return result
 
-
-def safe_write_file(file_path: str, content: str, mode: str = "664") -> None:
-    """Escreve um arquivo de forma segura, com fallback para sudo caso haja PermissionError."""
-    try:
-        with open(file_path, "w", encoding="utf-8") as f:
-            f.write(content)
-    except PermissionError:
-        p = subprocess.run(
-            ["sudo", "tee", file_path],
-            input=content,
-            text=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            timeout=10,
-        )
-        if p.returncode != 0:
-            raise RuntimeError(f"Falha ao escrever {file_path} via sudo: {p.stderr}")
-        subprocess.run(["sudo", "chmod", mode, file_path], check=False)
 
 
 def write_project_env_files(target_dir: str, env_text: str) -> str:

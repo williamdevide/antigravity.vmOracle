@@ -25,7 +25,8 @@ sudo usermod -a -G www-data ubuntu || true
 sudo chown -R ubuntu:ubuntu "$ACO_DIR"
 sudo chmod -R 775 "$ACO_DIR/execution"
 if [ -f "$ACO_DIR/execution/deployed_projects.json" ]; then
-    sudo chmod 664 "$ACO_DIR/execution/deployed_projects.json"
+    sudo chown ubuntu:ubuntu "$ACO_DIR/execution/deployed_projects.json"
+    sudo chmod 666 "$ACO_DIR/execution/deployed_projects.json"
 fi
 
 # Permissoes em /var/www/projects para evitar [Errno 13] Permission Denied
