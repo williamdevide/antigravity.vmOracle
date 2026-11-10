@@ -153,7 +153,10 @@ export default function App() {
     try {
       setLoading(true);
       const res = await authFetch('/api/overview');
-      if (!res.ok) throw new Error('Falha ao comunicar com a VM');
+      if (!res.ok) {
+        const errorText = await res.text().catch(() => '');
+        throw new Error(`Falha ao comunicar com a VM (HTTP ${res.status}): ${errorText || res.statusText}`);
+      }
       const json = await res.json();
       setData(json);
       setError(null);

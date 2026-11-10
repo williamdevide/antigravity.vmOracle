@@ -424,50 +424,55 @@ def control_arm_hunter(req: ArmActionRequest, _admin: dict[str, Any] = Depends(v
 @app.get("/api/overview")
 def get_complete_overview(_admin: dict[str, Any] = Depends(verify_admin_user)):
     """Endpoint unificado estilo Coolify: retorna VM, Plataforma A.C.O., Projetos, Bancos e Caçador ARM."""
-    sys_data = system_status(_admin)
-    hunter_data = get_arm_hunter_status(_admin)
-    projs = deployer.load_projects()
-    dbs = db_mgr.load_databases()
-    vm_ip = sys_data["publicIp"]
-    mem = sys_data["memory"]
-    disk = sys_data["disk"]
+    try:
+        sys_data = system_status(_admin)
+        hunter_data = get_arm_hunter_status(_admin)
+        projs = deployer.load_projects()
+        dbs = db_mgr.load_databases()
+        vm_ip = sys_data.get("publicIp", "147.15.2.73")
+        mem = sys_data.get("memory", {})
+        disk = sys_data.get("disk", {})
 
-    return {
-        "status": "success",
-        "baseDomain": f"{vm_ip}.sslip.io",
-        "vm": {
-            "hostname": sys_data["vmName"],
-            "ip": vm_ip,
-            "os": sys_data["os"],
-            "shape": sys_data["shape"],
-            "uptime": sys_data["uptime"],
-            "loadAvg": sys_data["loadAvg"],
-            "memory": {
-                "used": mem["ramUsedMB"],
-                "total": mem["ramTotalMB"],
-                "percent": mem["ramPercent"],
-                "swapUsed": mem["swapUsedMB"],
-                "swapTotal": mem["swapTotalMB"],
+        return {
+            "status": "success",
+            "baseDomain": f"{vm_ip}.sslip.io",
+            "vm": {
+                "hostname": sys_data.get("vmName", "vm-wdk-amd-x86"),
+                "ip": vm_ip,
+                "os": sys_data.get("os", "Canonical Ubuntu 26.04 LTS (x86_64)"),
+                "shape": sys_data.get("shape", "VM.Standard.E2.1.Micro (AMD EPYC)"),
+                "uptime": sys_data.get("uptime", "Ativo"),
+                "loadAvg": sys_data.get("loadAvg", [0.0, 0.0, 0.0]),
+                "memory": {
+                    "used": mem.get("ramUsedMB", 0),
+                    "total": mem.get("ramTotalMB", 1024),
+                    "percent": mem.get("ramPercent", 0),
+                    "swapUsed": mem.get("swapUsedMB", 0),
+                    "swapTotal": mem.get("swapTotalMB", 0),
+                },
+                "disk": {
+                    "used": f"{disk.get('usedGB', 0)}G",
+                    "total": f"{disk.get('totalGB', 0)}G",
+                    "percent": f"{disk.get('percent', 0)}%",
+                },
             },
-            "disk": {
-                "used": f"{disk['usedGB']}G",
-                "total": f"{disk['totalGB']}G",
-                "percent": f"{disk['percent']}%",
+            "acoPlatform": sys_data.get("acoPlatform", {}),
+            "hunter": {
+                "service_active": hunter_data.get("systemdServiceStatus", "active"),
+                "target_shape": f"{hunter_data.get('targetShape', 'VM.Standard.A1.Flex')} ({hunter_data.get('ocpus', 2)} OCPU / {hunter_data.get('memoryInGBs', 12)}GB RAM / {hunter_data.get('bootVolumeSizeInGBs', 150)}GB)",
+                "attempts": hunter_data.get("attempts", 0),
+                "last_check": hunter_data.get("lastCheck") or hunter_data.get("lastAttemptAt") or "Ativo 24/7",
+                "last_message": hunter_data.get("lastMessage", "Monitorando disponibilidade em São Paulo..."),
+                "recent_logs": hunter_data.get("recentLogs", []),
             },
-        },
-        "acoPlatform": sys_data["acoPlatform"],
-        "hunter": {
-            "service_active": hunter_data.get("systemdServiceStatus", "active"),
-            "target_shape": f"{hunter_data.get('targetShape', 'VM.Standard.A1.Flex')} ({hunter_data.get('ocpus', 2)} OCPU / {hunter_data.get('memoryInGBs', 12)}GB RAM / {hunter_data.get('bootVolumeSizeInGBs', 150)}GB)",
-            "attempts": hunter_data.get("attempts", 0),
-            "last_check": hunter_data.get("lastCheck") or hunter_data.get("lastAttemptAt") or "Ativo 24/7",
-            "last_message": hunter_data.get("lastMessage", "Monitorando disponibilidade em São Paulo..."),
-            "recent_logs": hunter_data.get("recentLogs", []),
-        },
-        "projects": projs,
-        "databases": dbs,
-        "autoDeployWatcher": _LAST_WATCHER_CHECK,
-    }
+            "projects": projs,
+            "databases": dbs,
+            "autoDeployWatcher": _LAST_WATCHER_CHECK,
+        }
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Erro interno no overview da VM: {str(e)}") from e
 
 
 @app.post("/api/hunter/{endpoint}")
