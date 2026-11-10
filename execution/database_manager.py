@@ -286,7 +286,8 @@ def create_database(name: str, engine: str = "sqlite") -> dict[str, Any]:
             "envSnippet": (
                 f'DATABASE_URL="{conn_url}"\n'
                 f'DB_HOST="127.0.0.1"\nDB_PORT="3306"\n'
-                f'DB_NAME="{db_name}"\nDB_USER="{db_user}"\nDB_PASSWORD="{password}"'
+                f'DB_NAME="{db_name}"\nDB_USER="{db_user}"\nDB_PASSWORD="{password}"\n'
+                f'DB_PASS="{password}"'
             ),
             "createdAt": now_iso,
         }

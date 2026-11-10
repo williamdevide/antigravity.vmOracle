@@ -98,7 +98,7 @@
     "lastCommitHash": "98f2c70",
     "lastCommitMessage": "deploy final",
     "lastCommitAuthor": "Antonio Augusto",
-    "envVarsText": "DATABASE_URL=\"mysql://labw:LabWare@2026@127.0.0.1:3306/labw\"\nDB_HOST=\"127.0.0.1\"\nDB_PORT=\"3306\"\nDB_NAME=\"labw\"\nDB_USER=\"labw\"\nDB_PASSWORD=\"LabWare@2026\"",
+    "envVarsText": "DATABASE_URL=\"mysql://labw:LabWare@2026@127.0.0.1:3306/labw\"\nDB_HOST=\"127.0.0.1\"\nDB_PORT=\"3306\"\nDB_NAME=\"labw\"\nDB_USER=\"labw\"\nDB_PASSWORD=\"LabWare@2026\"\nDB_PASS=\"LabWare@2026\"\nCRON_TOKEN=\"k7j-P2qL9m_zX5bN-wY3T-rQ8eF\"",
     "diskBytes": 15053962,
     "diskMB": 14.36,
     "diskFormatted": "14.36 MB",

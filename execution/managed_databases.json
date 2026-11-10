@@ -12,7 +12,7 @@
     "dbPassword": "LabWare@2026",
     "dataPath": "/var/lib/mysql",
     "connectionUrl": "mysql://labw:LabWare@2026@127.0.0.1:3306/labw",
-    "envSnippet": "DATABASE_URL=\"mysql://labw:LabWare@2026@127.0.0.1:3306/labw\"\nDB_HOST=\"127.0.0.1\"\nDB_PORT=\"3306\"\nDB_NAME=\"labw\"\nDB_USER=\"labw\"\nDB_PASSWORD=\"LabWare@2026\"",
+    "envSnippet": "DATABASE_URL=\"mysql://labw:LabWare@2026@127.0.0.1:3306/labw\"\nDB_HOST=\"127.0.0.1\"\nDB_PORT=\"3306\"\nDB_NAME=\"labw\"\nDB_USER=\"labw\"\nDB_PASSWORD=\"LabWare@2026\"\nDB_PASS=\"LabWare@2026\"",
     "createdAt": "2026-11-10T14:30:00-03:00"
   }
 ]
