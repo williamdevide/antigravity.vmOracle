@@ -1151,6 +1151,14 @@ def deploy_project(
     auth_url = build_authenticated_git_url(repo_url, github_token, git_token)
 
     try:
+        # Garantir permissoes adequadas para o usuario de execucao (ubuntu) e servidor web (www-data)
+        if os.path.exists(target_dir):
+            try:
+                run_cmd(["sudo", "chown", "-R", "ubuntu:www-data", target_dir])
+                run_cmd(["sudo", "chmod", "-R", "u+rwX,g+rwX", target_dir])
+            except Exception:
+                pass
+
         # 1. Clone ou Git Pull
         if os.path.exists(os.path.join(target_dir, ".git")):
             logs.append(f"[*] Sincronizando alteracoes do GitHub em {target_dir}...")
@@ -1433,6 +1441,13 @@ def deploy_project(
         final_human = format_bytes_human(final_bytes)
         logs.append(f"[+] Espaco ocupado em disco: {final_human} | Tempo de deploy: {duration_s}s")
         logs.append(f"[SUCESSO] Aplicacao online em {public_url}")
+
+        # Garantir permissao compartilhada final para PHP/Caddy (www-data) e A.C.O. (ubuntu)
+        try:
+            run_cmd(["sudo", "chown", "-R", "ubuntu:www-data", target_dir])
+            run_cmd(["sudo", "chmod", "-R", "u+rwX,g+rwX", target_dir])
+        except Exception:
+            pass
 
         deploy_entry = {
             "id": f"dep-{int(time.time())}",
