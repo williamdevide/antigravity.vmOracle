@@ -818,6 +818,696 @@ export default function App() {
   const totalProjectsRamMb = projects.reduce((acc, p) => acc + (p.ramMb || p.ramMB || 0), 0);
   const totalProjectsDiskMb = projects.reduce((acc, p) => acc + (p.diskMb || p.diskMB || 0), 0);
 
+
+  // =========================================================================
+  // RENDERIZADOR DO PAINEL EXPANSÍVEL DO PROJETO (INLINE ACCORDION NO CORPO)
+  // =========================================================================
+  const renderProjectDetails = (activeProject) => {
+    if (!activeProject) return null;
+    return (
+      <div className="border-t border-slate-800 bg-slate-950/70 p-4 sm:p-5 space-y-4 animate-in fade-in duration-150">
+        {/* Abas de Navegação do Projeto */}
+        <div className="flex items-center justify-between gap-2 pb-2.5 border-b border-slate-800 bg-slate-950/40 shrink-0 overflow-x-auto">
+          <div className="flex items-center gap-1.5 overflow-x-auto">
+            <button
+              type="button"
+              onClick={() => setProjectTab('controls')}
+              className={`px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer whitespace-nowrap ${
+                projectTab === 'controls'
+                  ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 font-bold'
+                  : 'bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              <Settings className="w-3.5 h-3.5 shrink-0" /> Configurações & Ações
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setProjectTab('env')}
+              className={`px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer whitespace-nowrap ${
+                projectTab === 'env'
+                  ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 font-bold'
+                  : 'bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              <Key className="w-3.5 h-3.5 text-amber-400 shrink-0" /> Variáveis (.env)
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setProjectTab('deployments')}
+              className={`px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer whitespace-nowrap ${
+                projectTab === 'deployments'
+                  ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 font-bold'
+                  : 'bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              <GitCommit className="w-3.5 h-3.5 text-indigo-400 shrink-0" /> Histórico ({activeProject.deploymentsHistory?.length || 0})
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setProjectTab('logs')}
+              className={`px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer whitespace-nowrap ${
+                projectTab === 'logs'
+                  ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 font-bold'
+                  : 'bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              <Terminal className="w-3.5 h-3.5 text-emerald-400 shrink-0" /> Logs em Tempo Real
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setProjectTab('cron')}
+              className={`px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer whitespace-nowrap ${
+                projectTab === 'cron'
+                  ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 font-bold'
+                  : 'bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              <Clock className="w-3.5 h-3.5 text-cyan-400 shrink-0" /> Cron / Agendamentos
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setProjectTab('files')}
+              className={`px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer whitespace-nowrap ${
+                projectTab === 'files'
+                  ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 font-bold'
+                  : 'bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              <FolderGit2 className="w-3.5 h-3.5 text-yellow-400 shrink-0" /> Árvore de Arquivos
+            </button>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setActiveProjectSlug(null)}
+            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition text-xs flex items-center gap-1 shrink-0 cursor-pointer"
+            title="Recolher painel"
+          >
+            <X className="w-3.5 h-3.5" /> <span className="hidden sm:inline">Recolher</span>
+          </button>
+        </div>
+
+        {/* Conteúdo das Abas */}
+        <div className="space-y-4 pt-1">
+              {/* ABA 1: CONFIGURAÇÕES & AÇÕES */}
+              {projectTab === 'controls' && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Controles de Execução */}
+                  <div className="bg-slate-950/80 border border-slate-800 rounded-xl p-4 space-y-3.5">
+                    <h3 className="text-xs font-bold uppercase tracking-wider text-cyan-400 flex items-center gap-1.5">
+                      <Play className="w-3.5 h-3.5 shrink-0" /> Controle de Ciclo de Vida
+                    </h3>
+
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <button
+                        onClick={() => handleServiceControl(activeProject.slug, 'restart')}
+                        disabled={actionLoading}
+                        className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs text-slate-200 flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
+                      >
+                        <RotateCcw className="w-3.5 h-3.5 text-cyan-400 shrink-0" /> Reiniciar
+                      </button>
+
+                      {activeProject.status === 'running' ? (
+                        <button
+                          onClick={() => handleServiceControl(activeProject.slug, 'stop')}
+                          disabled={actionLoading}
+                          className="px-3 py-1.5 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 text-xs text-amber-300 flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
+                        >
+                          <Square className="w-3.5 h-3.5 shrink-0" /> Parar
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => handleServiceControl(activeProject.slug, 'start')}
+                          disabled={actionLoading}
+                          className="px-3 py-1.5 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-xs text-emerald-300 flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
+                        >
+                          <Play className="w-3.5 h-3.5 shrink-0" /> Iniciar
+                        </button>
+                      )}
+
+                      <button
+                        onClick={() => handleDeleteProject(activeProject.slug)}
+                        disabled={actionLoading}
+                        className="px-3 py-1.5 rounded-xl bg-red-500/15 hover:bg-red-500/25 border border-red-500/30 text-xs text-red-300 flex items-center gap-1.5 cursor-pointer ml-auto whitespace-nowrap"
+                      >
+                        <Trash2 className="w-3.5 h-3.5 shrink-0" /> Excluir
+                      </button>
+                    </div>
+
+                    <div className="pt-3 border-t border-slate-800 space-y-3">
+                      <div className="p-2.5 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-between whitespace-nowrap">
+                        <div>
+                          <p className="text-xs font-semibold text-white">Auto-Deploy Contínuo</p>
+                          <p className="text-[10px] text-slate-400">Watcher a cada 60s + Webhook</p>
+                        </div>
+                        <input
+                          type="checkbox"
+                          checked={settingsAutoDeploy}
+                          onChange={(e) => setSettingsAutoDeploy(e.target.checked)}
+                          className="w-4 h-4 accent-cyan-500 cursor-pointer"
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-2.5">
+                        <div>
+                          <label className="block text-xs text-slate-400 mb-1">Branch</label>
+                          <input
+                            type="text"
+                            value={settingsBranch}
+                            onChange={(e) => setSettingsBranch(e.target.value)}
+                            className="w-full bg-slate-900 border border-slate-800 rounded-xl px-2.5 py-1.5 text-xs text-white font-mono"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs text-slate-400 mb-1">Porta Interna</label>
+                          <input
+                            type="text"
+                            disabled
+                            value={activeProject.port ? `127.0.0.1:${activeProject.port}` : 'Caddy Static'}
+                            className="w-full bg-slate-900/50 border border-slate-800 rounded-xl px-2.5 py-1.5 text-xs text-slate-400 font-mono"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="p-2.5 rounded-xl bg-slate-900 border border-slate-800 space-y-1">
+                        <div className="flex items-center justify-between text-[11px] whitespace-nowrap">
+                          <span className="text-slate-400">Webhook GitHub:</span>
+                          <button
+                            type="button"
+                            onClick={() => copyToClipboard(`https://${baseDomain}/api/webhooks/github/${activeProject.slug}`, 'Webhook')}
+                            className="text-cyan-400 hover:underline flex items-center gap-1 cursor-pointer"
+                          >
+                            <Copy className="w-3 h-3" /> Copiar
+                          </button>
+                        </div>
+                        <p className="text-[10px] font-mono text-slate-300 truncate">
+                          https://{baseDomain}/api/webhooks/github/{activeProject.slug}
+                        </p>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => handleSaveProjectSettings(activeProject.slug, false)}
+                        disabled={actionLoading}
+                        className="w-full py-2 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-xs cursor-pointer whitespace-nowrap"
+                      >
+                        Salvar Configurações
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Domínio & Endereço HTTPS */}
+                  <div className="bg-slate-950/80 border border-slate-800 rounded-xl p-4 space-y-3.5">
+                    <h3 className="text-xs font-bold uppercase tracking-wider text-cyan-400 flex items-center gap-1.5">
+                      <Globe className="w-3.5 h-3.5 shrink-0" /> Endereço HTTPS & Domínio
+                    </h3>
+
+                    <div>
+                      <label className="block text-xs text-slate-400 mb-1">Subdomínio (.sslip.io)</label>
+                      <div className="flex items-center bg-slate-900 border border-slate-800 rounded-xl overflow-hidden">
+                        <input
+                          type="text"
+                          value={newSlugValue}
+                          onChange={(e) => setNewSlugValue(sanitizeSlug(e.target.value))}
+                          className="w-full bg-transparent px-3 py-1.5 text-xs text-cyan-300 font-mono focus:outline-none min-w-0"
+                        />
+                        <span className="px-2.5 py-1.5 bg-slate-800 text-xs text-slate-400 font-mono border-l border-slate-800 shrink-0 whitespace-nowrap">
+                          .{baseDomain}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs text-slate-400 mb-1">Domínio Próprio (Opcional)</label>
+                      <input
+                        type="text"
+                        placeholder="Ex: app.meudominio.com.br"
+                        value={newCustomDomainValue}
+                        onChange={(e) => setNewCustomDomainValue(e.target.value)}
+                        className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-1.5 text-xs text-white font-mono"
+                      />
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => handleRenameProject(activeProject.slug)}
+                      disabled={actionLoading}
+                      className="w-full py-2 rounded-xl bg-indigo-500 hover:bg-indigo-400 text-slate-950 font-bold text-xs cursor-pointer whitespace-nowrap"
+                    >
+                      Atualizar Endereço HTTPS
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* ABA 2: VARIÁVEIS (.ENV) */}
+              {projectTab === 'env' && (
+                <div className="bg-slate-950/80 border border-slate-800 rounded-xl p-4 sm:p-5 space-y-3.5">
+                  <div className="flex flex-wrap items-center justify-between gap-2.5">
+                    <div>
+                      <h3 className="text-xs sm:text-sm font-bold text-white flex items-center gap-1.5">
+                        <Key className="w-4 h-4 text-amber-400 shrink-0" /> Variáveis de Ambiente (.env)
+                      </h3>
+                      <p className="text-[11px] text-slate-400">Injetadas na raiz, em /frontend, /backend e no systemd.</p>
+                    </div>
+
+                    {/* Injetar Banco */}
+                    <div className="flex items-center gap-1.5">
+                      <select
+                        value={injectDbSlug}
+                        onChange={(e) => setInjectDbSlug(e.target.value)}
+                        className="bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-1 text-xs text-slate-200"
+                      >
+                        <option value="">Injetar Banco...</option>
+                        {databases.map(db => (
+                          <option key={db.slug} value={db.slug}>{db.name} ({db.engineLabel})</option>
+                        ))}
+                      </select>
+                      <button
+                        type="button"
+                        disabled={!injectDbSlug || actionLoading}
+                        onClick={() => handleInjectDatabaseIntoProject(injectDbSlug, activeProject.slug)}
+                        className="px-2.5 py-1 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/40 text-emerald-300 text-xs font-semibold cursor-pointer disabled:opacity-40 whitespace-nowrap"
+                      >
+                        + Injetar
+                      </button>
+                    </div>
+                  </div>
+
+                  <textarea
+                    rows={8}
+                    value={envEditorText}
+                    onChange={(e) => setEnvEditorText(e.target.value)}
+                    placeholder={"NODE_ENV=production\nDATABASE_URL=..."}
+                    className="w-full bg-slate-900 border border-slate-800 rounded-xl p-3 text-xs font-mono text-amber-200 focus:outline-none focus:border-cyan-500 leading-relaxed"
+                  />
+
+                  <div className="flex flex-wrap items-center justify-end gap-2.5">
+                    <button
+                      type="button"
+                      onClick={() => handleSaveProjectSettings(activeProject.slug, false)}
+                      disabled={actionLoading}
+                      className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-white cursor-pointer whitespace-nowrap"
+                    >
+                      Salvar Apenas .env
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleSaveProjectSettings(activeProject.slug, true)}
+                      disabled={actionLoading}
+                      className="px-4 py-2 rounded-xl bg-gradient-to-r from-cyan-500 to-indigo-600 text-slate-950 font-bold text-xs flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
+                    >
+                      <Rocket className="w-3.5 h-3.5 shrink-0" /> Salvar .env + Recompilar
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* ABA 3: HISTÓRICO DE DEPLOYS */}
+              {projectTab === 'deployments' && (
+                <div className="bg-slate-950/80 border border-slate-800 rounded-xl p-4 sm:p-5 space-y-3">
+                  <div className="flex items-center justify-between whitespace-nowrap">
+                    <h3 className="text-xs sm:text-sm font-bold text-white flex items-center gap-1.5">
+                      <GitCommit className="w-4 h-4 text-indigo-400 shrink-0" /> Histórico de Implantações
+                    </h3>
+                    <span className="text-xs text-slate-400">
+                      {activeProject.deploymentsHistory?.length || 0} deploys
+                    </span>
+                  </div>
+
+                  {(activeProject.deploymentsHistory || []).length === 0 ? (
+                    <p className="text-xs text-slate-500 py-6 text-center">Nenhum deploy registrado ainda.</p>
+                  ) : (
+                    <div className="space-y-2.5">
+                      {activeProject.deploymentsHistory.map((dep) => {
+                        const isExpanded = expandedDeployId === dep.id;
+                        return (
+                          <div key={dep.id} className="rounded-xl bg-slate-900 border border-slate-800 overflow-hidden">
+                            <div
+                              onClick={() => setExpandedDeployId(isExpanded ? null : dep.id)}
+                              className="p-3 flex flex-wrap items-center justify-between gap-2 hover:bg-slate-800/50 transition cursor-pointer"
+                            >
+                              <div className="flex items-center gap-2 flex-wrap min-w-0">
+                                <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase whitespace-nowrap shrink-0 ${
+                                  dep.status === 'success'
+                                    ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
+                                    : 'bg-red-500/15 text-red-400 border border-red-500/30'
+                                }`}>
+                                  {dep.status === 'success' ? 'SUCESSO' : 'FALHOU'}
+                                </span>
+
+                                <span className="font-mono text-xs text-cyan-300 font-semibold shrink-0">
+                                  #{dep.commitHash || 'local'}
+                                </span>
+
+                                <span className="text-xs text-white font-medium truncate max-w-[280px]">
+                                  {dep.commitMessage || 'Deploy'}
+                                </span>
+
+                                <span className="text-[9px] px-1.5 py-0.5 rounded bg-slate-800 text-slate-300 font-mono whitespace-nowrap shrink-0">
+                                  {dep.trigger}
+                                </span>
+                              </div>
+
+                              <div className="flex items-center gap-3 text-[11px] text-slate-400 font-mono whitespace-nowrap shrink-0">
+                                <span>⏱️ {dep.durationSec || dep.durationSeconds || 1}s</span>
+                                <span>📅 {dep.timestamp ? dep.timestamp.split('T')[0] : 'Hoje'}</span>
+                              </div>
+                            </div>
+
+                            {isExpanded && (
+                              <div className="p-3.5 border-t border-slate-800 bg-black/80 text-[10px] font-mono text-emerald-300 whitespace-pre-wrap max-h-64 overflow-y-auto leading-relaxed">
+                                {dep.log || 'Sem log detalhado.'}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* ABA 4: LOGS EM TEMPO REAL */}
+              {projectTab === 'logs' && (
+                <div className="bg-slate-950/80 border border-slate-800 rounded-xl p-4 sm:p-5 space-y-3">
+                  <div className="flex items-center justify-between whitespace-nowrap">
+                    <div>
+                      <h3 className="text-xs sm:text-sm font-bold text-white flex items-center gap-1.5">
+                        <Terminal className="w-4 h-4 text-emerald-400 shrink-0" /> Console de Execução (Runtime)
+                      </h3>
+                      <p className="text-[11px] text-slate-400">Saída padrão de stdout/stderr (systemd / caddy)</p>
+                    </div>
+                    <button
+                      onClick={() => fetchProjectRuntimeLogs(activeProject.slug)}
+                      className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs text-cyan-300 flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
+                    >
+                      <RefreshCw className={`w-3.5 h-3.5 shrink-0 ${loadingLogs ? 'animate-spin' : ''}`} /> Atualizar
+                    </button>
+                  </div>
+
+                  <div className="p-3.5 rounded-xl bg-black/90 border border-slate-800 font-mono text-[11px] text-slate-200 whitespace-pre-wrap h-72 overflow-y-auto leading-relaxed">
+                    {loadingLogs ? 'Carregando logs...' : projectLogs}
+                  </div>
+                </div>
+              )}
+
+              {/* ABA 5: CRON / AGENDAMENTOS */}
+              {projectTab === 'cron' && (
+                <div className="bg-slate-950/80 border border-slate-800 rounded-xl p-4 sm:p-5 space-y-4">
+                  <div className="flex flex-wrap items-center justify-between gap-2.5 pb-3 border-b border-slate-800">
+                    <div>
+                      <h3 className="text-xs sm:text-sm font-bold text-white flex items-center gap-1.5">
+                        <Clock className="w-4 h-4 text-cyan-400 shrink-0" /> Agendador de Tarefas Cron
+                      </h3>
+                      <p className="text-[11px] text-slate-400 mt-0.5">
+                        Rotinas em background (PHP, Bash, scripts) com execução isolada no sistema (/etc/cron.d/aco-{activeProject.slug})
+                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={handleRunCronNow}
+                        disabled={runningCron || !projectCron.command}
+                        className="px-3 py-1.5 rounded-xl bg-cyan-600/20 hover:bg-cyan-600/30 text-cyan-300 border border-cyan-500/40 text-xs font-semibold flex items-center gap-1.5 cursor-pointer disabled:opacity-50 transition"
+                      >
+                        <Play className="w-3.5 h-3.5 shrink-0" /> {runningCron ? 'Executando...' : 'Testar Agora'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleSaveCron}
+                        disabled={savingCron}
+                        className="px-3.5 py-1.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 text-xs font-bold flex items-center gap-1.5 cursor-pointer disabled:opacity-50 transition shadow-lg shadow-cyan-500/20"
+                      >
+                        <Save className="w-3.5 h-3.5 shrink-0" /> {savingCron ? 'Salvando...' : 'Salvar Agendamento'}
+                      </button>
+                    </div>
+                  </div>
+
+                  {cronMsg && (
+                    <div className={`p-2.5 rounded-xl text-xs flex items-center gap-2 ${
+                      cronMsg.type === 'success' ? 'bg-emerald-500/15 border border-emerald-500/30 text-emerald-300' : 'bg-red-500/15 border border-red-500/30 text-red-300'
+                    }`}>
+                      {cronMsg.type === 'success' ? <CheckCircle2 className="w-4 h-4 shrink-0" /> : <AlertTriangle className="w-4 h-4 shrink-0" />}
+                      <span>{cronMsg.text}</span>
+                    </div>
+                  )}
+
+                  {/* Configurações de Cron */}
+                  <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+                    <div className="md:col-span-5 space-y-3 bg-slate-900/60 p-3.5 rounded-xl border border-slate-800">
+                      <div className="flex items-center justify-between">
+                        <label className="text-xs font-semibold text-slate-300">Status do Agendador</label>
+                        <label className="relative inline-flex items-center cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={projectCron.enabled}
+                            onChange={(e) => setProjectCron({ ...projectCron, enabled: e.target.checked })}
+                            className="sr-only peer"
+                          />
+                          <div className="w-9 h-5 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-cyan-500"></div>
+                          <span className="ml-2 text-xs font-medium text-slate-400">
+                            {projectCron.enabled ? 'Ativo' : 'Pausado'}
+                          </span>
+                        </label>
+                      </div>
+
+                      <div>
+                        <label className="block text-xs text-slate-400 mb-1">Expressão Crontab</label>
+                        <input
+                          type="text"
+                          value={projectCron.schedule}
+                          onChange={(e) => setProjectCron({ ...projectCron, schedule: e.target.value })}
+                          placeholder="* * * * *"
+                          className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-1.5 text-xs text-cyan-300 font-mono focus:outline-none focus:border-cyan-500"
+                        />
+                        <div className="flex flex-wrap gap-1 mt-1.5">
+                          <button
+                            type="button"
+                            onClick={() => setProjectCron({ ...projectCron, schedule: '* * * * *' })}
+                            className="text-[10px] px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 font-mono"
+                          >
+                            1 min (* * * * *)
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setProjectCron({ ...projectCron, schedule: '*/5 * * * *' })}
+                            className="text-[10px] px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 font-mono"
+                          >
+                            5 min (*/5 * * * *)
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setProjectCron({ ...projectCron, schedule: '0 * * * *' })}
+                            className="text-[10px] px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 font-mono"
+                          >
+                            1 hora (0 * * * *)
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setProjectCron({ ...projectCron, schedule: '0 0 * * *' })}
+                            className="text-[10px] px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 font-mono"
+                          >
+                            Diário (0 0 * * *)
+                          </button>
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-xs text-slate-400 mb-1">Comando a Executar</label>
+                        <input
+                          type="text"
+                          value={projectCron.command}
+                          onChange={(e) => setProjectCron({ ...projectCron, command: e.target.value })}
+                          placeholder="php cron.php ou php artisan schedule:run"
+                          className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-1.5 text-xs text-white font-mono focus:outline-none focus:border-cyan-500"
+                        />
+                        <p className="text-[10px] text-slate-500 mt-1">
+                          Executado no diretório: <span className="font-mono text-slate-400">{activeProject.workDir}</span>
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Visualizador de Logs do Cron */}
+                    <div className="md:col-span-7 bg-slate-950 border border-slate-800 rounded-xl p-3 flex flex-col justify-between">
+                      <div>
+                        <div className="flex items-center justify-between pb-2 border-b border-slate-800/80 mb-2">
+                          <span className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
+                            <Terminal className="w-3.5 h-3.5 text-emerald-400 shrink-0" /> Log de Execuções Recentes
+                          </span>
+                          <span className="text-[10px] font-mono text-slate-500">/var/log/aco-cron/{activeProject.slug}.log</span>
+                        </div>
+                        <pre className="bg-slate-900/90 text-emerald-400 font-mono text-[11px] p-2.5 rounded-lg overflow-x-auto max-h-56 overflow-y-auto leading-relaxed whitespace-pre-wrap">
+                          {loadingCron ? 'Carregando logs do cron...' : projectCron.recentLogs || 'Sem registros de execução ainda.'}
+                        </pre>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* ABA 6: ÁRVORE DE ARQUIVOS (FILE TREE EXPLORER) */}
+              {projectTab === 'files' && (
+                <div className="bg-slate-950/80 border border-slate-800 rounded-xl p-4 sm:p-5 space-y-4">
+                  {/* Barra de Navegação do Caminho */}
+                  <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-800">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <FolderGit2 className="w-4 h-4 text-yellow-400 shrink-0" />
+                      <span className="text-xs font-bold text-white">Navegador de Arquivos:</span>
+                      <div className="flex items-center gap-1 font-mono text-xs text-cyan-300 bg-slate-900 px-2.5 py-1 rounded-lg border border-slate-800 truncate">
+                        <button
+                          type="button"
+                          onClick={() => { setFilesPath(''); setSelectedFile(null); }}
+                          className="hover:text-white hover:underline cursor-pointer"
+                        >
+                          /{activeProject.slug}
+                        </button>
+                        {filesPath && (
+                          <>
+                            <span className="text-slate-500">/</span>
+                            <span className="text-amber-300 truncate">{filesPath}</span>
+                          </>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 shrink-0">
+                      {filesPath && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const parts = filesPath.split('/');
+                            parts.pop();
+                            setFilesPath(parts.join('/'));
+                            setSelectedFile(null);
+                          }}
+                          className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs text-slate-200 flex items-center gap-1 cursor-pointer"
+                        >
+                          <ArrowLeft className="w-3.5 h-3.5" /> Subir Pasta (..)
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => fetchProjectFiles(activeProject.slug, filesPath)}
+                        className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white"
+                        title="Atualizar pasta"
+                      >
+                        <RefreshCw className={`w-3.5 h-3.5 ${loadingFiles ? 'animate-spin text-cyan-400' : ''}`} />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Grid: Lista de Arquivos à Esquerda + Pré-visualização à Direita */}
+                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+                    {/* Lista de Pastas e Arquivos */}
+                    <div className="lg:col-span-5 bg-slate-900/70 border border-slate-800 rounded-xl overflow-hidden flex flex-col h-96">
+                      <div className="p-2.5 bg-slate-950/60 border-b border-slate-800 text-[11px] font-semibold text-slate-400 flex items-center justify-between">
+                        <span>Nome</span>
+                        <span>Tamanho</span>
+                      </div>
+                      <div className="p-1 overflow-y-auto flex-1 space-y-0.5">
+                        {loadingFiles ? (
+                          <div className="p-8 text-center text-xs text-slate-400 flex flex-col items-center gap-2">
+                            <RefreshCw className="w-4 h-4 animate-spin text-cyan-400" />
+                            <span>Lendo diretório...</span>
+                          </div>
+                        ) : filesList.length === 0 ? (
+                          <div className="p-8 text-center text-xs text-slate-500">Esta pasta está vazia.</div>
+                        ) : (
+                          filesList.map((item) => (
+                            <button
+                              key={item.relativePath}
+                              type="button"
+                              onClick={() => {
+                                if (item.isDirectory) {
+                                  setFilesPath(item.relativePath);
+                                  setSelectedFile(null);
+                                } else {
+                                  fetchFileContent(activeProject.slug, item.relativePath);
+                                }
+                              }}
+                              className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs transition cursor-pointer text-left ${
+                                selectedFile?.relativePath === item.relativePath
+                                  ? 'bg-cyan-500/20 text-cyan-300 font-semibold border border-cyan-500/30'
+                                  : 'hover:bg-slate-800/80 text-slate-300'
+                              }`}
+                            >
+                              <div className="flex items-center gap-2 min-w-0">
+                                {item.isDirectory ? (
+                                  <Folder className="w-3.5 h-3.5 text-yellow-400 shrink-0 fill-yellow-400/20" />
+                                ) : item.extension === 'php' ? (
+                                  <FileCode className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
+                                ) : item.name.startsWith('.env') ? (
+                                  <Key className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                                ) : (
+                                  <FileText className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                                )}
+                                <span className="truncate">{item.name}</span>
+                              </div>
+                              <span className="font-mono text-[10px] text-slate-500 shrink-0 ml-2">
+                                {item.sizeFormatted}
+                              </span>
+                            </button>
+                          ))
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Visualizador de Conteúdo do Arquivo */}
+                    <div className="lg:col-span-7 bg-slate-900/70 border border-slate-800 rounded-xl overflow-hidden flex flex-col h-96">
+                      <div className="p-2.5 bg-slate-950/60 border-b border-slate-800 flex items-center justify-between text-xs">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <Code2 className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+                          <span className="font-mono text-slate-300 truncate font-semibold">
+                            {selectedFile ? selectedFile.relativePath : 'Nenhum arquivo selecionado'}
+                          </span>
+                          {selectedFile && (
+                            <span className="text-[10px] text-slate-500 font-mono">({selectedFile.sizeFormatted})</span>
+                          )}
+                        </div>
+                        {selectedFile?.content && (
+                          <button
+                            type="button"
+                            onClick={() => copyToClipboard(selectedFile.content, selectedFile.relativePath)}
+                            className="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-[10px] text-cyan-300 flex items-center gap-1 cursor-pointer shrink-0"
+                          >
+                            <Copy className="w-3 h-3" /> Copiar
+                          </button>
+                        )}
+                      </div>
+
+                      <div className="p-3 overflow-y-auto flex-1 font-mono text-xs bg-slate-950 leading-relaxed">
+                        {loadingFileContent ? (
+                          <div className="h-full flex items-center justify-center text-slate-400 gap-2">
+                            <RefreshCw className="w-4 h-4 animate-spin text-cyan-400" />
+                            <span>Carregando arquivo...</span>
+                          </div>
+                        ) : selectedFile ? (
+                          <pre className="text-slate-200 whitespace-pre-wrap selection:bg-cyan-500/30">
+                            {selectedFile.content}
+                          </pre>
+                        ) : (
+                          <div className="h-full flex flex-col items-center justify-center text-slate-500 gap-1.5">
+                            <FileText className="w-6 h-6 stroke-1 text-slate-600" />
+                            <p className="text-xs">Selecione um arquivo à esquerda para visualizar seu código.</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col lg:flex-row">
       {/* Toast Flutuante */}
@@ -1175,146 +1865,143 @@ export default function App() {
                 </button>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {projects.map((proj) => (
-                  <div
-                    key={proj.slug}
-                    className="bg-slate-900/80 hover:bg-slate-900 border border-slate-800 hover:border-slate-700 rounded-2xl p-4 sm:p-5 flex flex-col justify-between gap-4 transition shadow-lg"
-                  >
-                    <div className="space-y-3">
-                      {/* Linha 1 do Card: Título, Status e Badges de RAM/Disco */}
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="min-w-0">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <h3
-                              onClick={() => { setActiveProjectSlug(proj.slug); setProjectTab('controls'); }}
-                              className="text-sm sm:text-base font-bold text-white hover:text-cyan-300 cursor-pointer transition truncate max-w-[200px]"
-                              title={proj.name}
-                            >
-                              {proj.name}
-                            </h3>
-                            <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase whitespace-nowrap shrink-0 ${
-                              proj.status === 'running'
-                                ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
-                                : 'bg-red-500/15 text-red-400 border border-red-500/30'
-                            }`}>
-                              {proj.status === 'running' ? 'ONLINE' : 'STOPPED'}
+              <div className="space-y-3">
+                {projects.map((proj) => {
+                  const isExpanded = activeProjectSlug === proj.slug;
+                  return (
+                    <div
+                      key={proj.slug}
+                      className={`bg-slate-900/80 border transition-all duration-200 rounded-2xl shadow-lg overflow-hidden ${
+                        isExpanded ? 'border-cyan-500/50 ring-1 ring-cyan-500/20 bg-slate-900' : 'border-slate-800 hover:border-slate-700'
+                      }`}
+                    >
+                      {/* Linha Resumida do Projeto (Summary Row) */}
+                      <div
+                        onClick={() => {
+                          if (isExpanded) {
+                            setActiveProjectSlug(null);
+                          } else {
+                            setActiveProjectSlug(proj.slug);
+                            if (!projectTab) setProjectTab('controls');
+                          }
+                        }}
+                        className="p-3.5 sm:p-4 flex flex-wrap items-center justify-between gap-3 cursor-pointer select-none hover:bg-slate-800/40 transition"
+                      >
+                        {/* Bloco Esquerdo: Seta, Nome, Status, Stack, Link Direto, AutoDeploy */}
+                        <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setActiveProjectSlug(isExpanded ? null : proj.slug);
+                              if (!isExpanded && !projectTab) setProjectTab('controls');
+                            }}
+                            className={`p-1.5 rounded-lg text-slate-400 hover:text-cyan-300 hover:bg-slate-800 transition transform ${
+                              isExpanded ? 'rotate-90 text-cyan-400 bg-slate-800' : ''
+                            }`}
+                            title={isExpanded ? 'Recolher detalhes' : 'Expandir no corpo da página'}
+                          >
+                            <ChevronRight className="w-4 h-4 transition-transform duration-200" />
+                          </button>
+
+                          <h3
+                            className="text-sm sm:text-base font-bold text-white hover:text-cyan-300 transition truncate max-w-[200px]"
+                            title={proj.name}
+                          >
+                            {proj.name}
+                          </h3>
+
+                          <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase whitespace-nowrap shrink-0 flex items-center gap-1.5 ${
+                            proj.status === 'running'
+                              ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
+                              : 'bg-red-500/15 text-red-400 border border-red-500/30'
+                          }`}>
+                            <span className={`w-1.5 h-1.5 rounded-full ${proj.status === "running" ? "bg-emerald-400 animate-pulse" : "bg-red-400"}`} />
+                            {proj.status === 'running' ? 'ONLINE' : 'STOPPED'}
+                          </span>
+
+                          <span className="px-2 py-0.5 rounded-md text-[9px] font-mono uppercase bg-indigo-500/15 text-indigo-300 border border-indigo-500/30 whitespace-nowrap shrink-0">
+                            {proj.projectType}
+                          </span>
+
+                          <a
+                            href={proj.url}
+                            target="_blank"
+                            rel="noreferrer"
+                            onClick={(e) => e.stopPropagation()}
+                            className="text-xs font-mono text-cyan-400 hover:underline hidden sm:inline-flex items-center gap-1 truncate max-w-[240px]"
+                            title={`Abrir ${proj.url}`}
+                          >
+                            <Globe className="w-3 h-3 shrink-0" />
+                            <span className="truncate">{proj.url}</span>
+                            <ExternalLink className="w-3 h-3 shrink-0 opacity-70" />
+                          </a>
+
+                          {proj.autoDeploy !== false && (
+                            <span className="hidden md:inline-flex px-1.5 py-0.5 rounded text-[9px] bg-cyan-500/10 text-cyan-300 border border-cyan-500/20 whitespace-nowrap shrink-0 items-center gap-1">
+                              <RefreshCw className="w-2.5 h-2.5 shrink-0" /> Auto
                             </span>
-                            <span className="px-2 py-0.5 rounded-md text-[9px] font-mono uppercase bg-indigo-500/15 text-indigo-300 border border-indigo-500/30 whitespace-nowrap shrink-0">
-                              {proj.projectType}
+                          )}
+                        </div>
+
+                        {/* Bloco Direito: Telemetria (RAM, Disco, Commit) e Ações Rápidas */}
+                        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+                          <div className="hidden lg:flex items-center gap-1.5 text-[11px] font-mono text-slate-400 bg-slate-950/80 px-2 py-1 rounded-lg border border-slate-800">
+                            <GitCommit className="w-3 h-3 text-amber-400 shrink-0" />
+                            <span className="text-amber-300">#{proj.lastCommitHash || 'local'}</span>
+                          </div>
+
+                          <div className="flex items-center gap-1.5 whitespace-nowrap">
+                            <span className="px-2 py-1 rounded-lg bg-slate-950 border border-slate-800 text-[10px] font-mono text-cyan-300 flex items-center gap-1" title="Consumo de RAM">
+                              <Cpu className="w-3 h-3 shrink-0 text-cyan-400" /> {proj.ramFormatted || '0 B'}
+                            </span>
+                            <span className="px-2 py-1 rounded-lg bg-slate-950 border border-slate-800 text-[10px] font-mono text-indigo-300 flex items-center gap-1" title="Espaço em Disco">
+                              <HardDrive className="w-3 h-3 shrink-0 text-indigo-400" /> {proj.diskFormatted || '0 B'}
                             </span>
                           </div>
 
-                          <div className="flex items-center gap-2 mt-1">
-                            <a
-                              href={proj.url}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="text-xs font-mono text-cyan-400 hover:underline inline-flex items-center gap-1 truncate max-w-[240px]"
+                          {/* Ações Rápidas em Linha */}
+                          <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
+                            <button
+                              onClick={() => handleManualRedeploy(proj)}
+                              disabled={actionLoading}
+                              className="px-2.5 py-1 rounded-lg bg-cyan-500/15 hover:bg-cyan-500/25 border border-cyan-500/30 text-cyan-300 text-xs font-semibold flex items-center gap-1 cursor-pointer disabled:opacity-50 whitespace-nowrap transition"
+                              title="Fazer Deploy Manual Agora"
                             >
-                              <Globe className="w-3 h-3 shrink-0" />
-                              <span className="truncate">{proj.url}</span>
-                              <ExternalLink className="w-3 h-3 shrink-0 opacity-70" />
-                            </a>
+                              <Rocket className="w-3.5 h-3.5 shrink-0" /> <span className="hidden sm:inline">Deploy</span>
+                            </button>
 
-                            {proj.autoDeploy !== false && (
-                              <span className="px-1.5 py-0.5 rounded text-[9px] bg-cyan-500/10 text-cyan-300 border border-cyan-500/20 whitespace-nowrap shrink-0 flex items-center gap-1">
-                                <RefreshCw className="w-2.5 h-2.5 shrink-0" /> Auto
-                              </span>
-                            )}
+                            <button
+                              onClick={() => {
+                                setActiveProjectSlug(isExpanded ? null : proj.slug);
+                                if (!isExpanded && !projectTab) setProjectTab('controls');
+                              }}
+                              className={`px-2.5 py-1 rounded-lg text-xs font-semibold flex items-center gap-1.5 cursor-pointer whitespace-nowrap transition ${
+                                isExpanded
+                                  ? 'bg-cyan-500 text-slate-950 shadow-md font-bold'
+                                  : 'bg-slate-800 hover:bg-slate-700 text-white'
+                              }`}
+                              title={isExpanded ? 'Recolher detalhes' : 'Expandir gerenciador'}
+                            >
+                              {isExpanded ? (
+                                <>
+                                  <ChevronDown className="w-3.5 h-3.5 stroke-[2.5]" /> <span>Recolher</span>
+                                </>
+                              ) : (
+                                <>
+                                  <ChevronRight className="w-3.5 h-3.5 stroke-[2.5]" /> <span>Gerenciar</span>
+                                </>
+                              )}
+                            </button>
                           </div>
                         </div>
-
-                        {/* Badges de RAM e Disco */}
-                        <div className="flex flex-col items-end gap-1 shrink-0 whitespace-nowrap">
-                          <span className="px-2 py-0.5 rounded-md bg-slate-950 border border-slate-800 text-[10px] font-mono text-cyan-300 flex items-center gap-1">
-                            <Cpu className="w-3 h-3 shrink-0" /> {proj.ramFormatted || '0 B'}
-                          </span>
-                          <span className="px-2 py-0.5 rounded-md bg-slate-950 border border-slate-800 text-[10px] font-mono text-indigo-300 flex items-center gap-1">
-                            <HardDrive className="w-3 h-3 shrink-0" /> {proj.diskFormatted || '0 B'}
-                          </span>
-                        </div>
                       </div>
 
-                      {/* Linha 2 do Card: Commit Git */}
-                      <div className="p-2 rounded-xl bg-slate-950/80 border border-slate-800/80 flex items-center justify-between text-[11px] text-slate-400 min-w-0">
-                        <div className="truncate flex items-center gap-1.5 min-w-0">
-                          <GitCommit className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-                          <span className="font-mono text-amber-300 shrink-0">#{proj.lastCommitHash || 'local'}</span>
-                          <span className="truncate text-slate-300">{proj.lastCommitMessage || 'Deploy inicial'}</span>
-                        </div>
-                        <span className="font-mono text-[10px] shrink-0 ml-2 whitespace-nowrap">{proj.updatedAt ? proj.updatedAt.split('T')[0] : 'Hoje'}</span>
-                      </div>
+                      {/* Corpo Expandido no Próprio Fluxo da Página (Inline Accordion) */}
+                      {isExpanded && activeProject && activeProject.slug === proj.slug && renderProjectDetails(activeProject)}
                     </div>
-
-                    {/* Rodapé de Ações do Card */}
-                    <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-800/80">
-                      {/* Grupo de Abas / Visualizadores */}
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        <button
-                          onClick={() => { setActiveProjectSlug(proj.slug); setProjectTab('controls'); }}
-                          className="px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-white flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
-                        >
-                          <Settings className="w-3.5 h-3.5 text-cyan-400 shrink-0" /> Gerenciar
-                        </button>
-
-                        <button
-                          onClick={() => { setActiveProjectSlug(proj.slug); setProjectTab('env'); }}
-                          className="px-2 py-1.5 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-xs text-amber-300 flex items-center gap-1 cursor-pointer whitespace-nowrap"
-                          title="Variáveis .env"
-                        >
-                          <Key className="w-3.5 h-3.5 shrink-0" /> .env
-                        </button>
-
-                        <button
-                          onClick={() => { setActiveProjectSlug(proj.slug); setProjectTab('deployments'); }}
-                          className="px-2 py-1.5 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-xs text-indigo-300 flex items-center gap-1 cursor-pointer whitespace-nowrap"
-                          title="Histórico de Deploys"
-                        >
-                          <FileText className="w-3.5 h-3.5 shrink-0" /> Histórico
-                        </button>
-
-                        <button
-                          onClick={() => { setActiveProjectSlug(proj.slug); setProjectTab('logs'); }}
-                          className="px-2 py-1.5 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-xs text-emerald-400 flex items-center gap-1 cursor-pointer whitespace-nowrap"
-                          title="Logs em Tempo Real"
-                        >
-                          <Terminal className="w-3.5 h-3.5 shrink-0" /> Logs
-                        </button>
-
-                        <button
-                          onClick={() => { setActiveProjectSlug(proj.slug); setProjectTab('cron'); }}
-                          className="px-2 py-1.5 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-xs text-cyan-300 flex items-center gap-1 cursor-pointer whitespace-nowrap"
-                          title="Tarefas e Eventos Cron"
-                        >
-                          <Clock className="w-3.5 h-3.5 shrink-0" /> Cron
-                        </button>
-                      </div>
-
-                      {/* Botão Deploy Manual */}
-                      <div className="flex items-center gap-1.5 shrink-0">
-                        <button
-                          onClick={() => handleManualRedeploy(proj)}
-                          disabled={actionLoading}
-                          className="px-2.5 py-1.5 rounded-xl bg-cyan-500/15 hover:bg-cyan-500/25 border border-cyan-500/30 text-cyan-300 text-xs font-semibold flex items-center gap-1 cursor-pointer disabled:opacity-50 whitespace-nowrap"
-                          title="Deploy Manual Agora"
-                        >
-                          <Rocket className="w-3.5 h-3.5 shrink-0" /> Deploy
-                        </button>
-
-                        <a
-                          href={proj.url}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="p-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 shrink-0"
-                          title="Abrir em nova aba"
-                        >
-                          <ExternalLink className="w-3.5 h-3.5" />
-                        </a>
-                      </div>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>
@@ -2184,737 +2871,6 @@ export default function App() {
         </div>
       )}
 
-      {/* =====================================================================
-          MODAL POPUP OVERLAY: GERENCIADOR DO PROJETO (FIXED INSET-0 Z-50)
-         ===================================================================== */}
-      {activeProject && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-5 overflow-y-auto">
-          <div
-            className="relative w-full max-w-5xl bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl overflow-hidden my-auto flex flex-col max-h-[92vh]"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Topo do Modal */}
-            <div className="p-4 sm:p-5 border-b border-slate-800 bg-slate-950/80 flex flex-wrap items-center justify-between gap-3 shrink-0">
-              <div className="min-w-0 space-y-1">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <h2 className="text-base sm:text-lg font-bold text-white truncate max-w-[280px]" title={activeProject.name}>
-                    {activeProject.name}
-                  </h2>
-                  <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold whitespace-nowrap shrink-0 ${
-                    activeProject.status === 'running'
-                      ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
-                      : 'bg-red-500/15 text-red-400 border border-red-500/30'
-                  }`}>
-                    {activeProject.status === 'running' ? 'ONLINE' : 'STOPPED'}
-                  </span>
-
-                  <span className="text-[10px] px-2 py-0.5 rounded-md bg-indigo-500/15 text-indigo-300 font-mono uppercase whitespace-nowrap shrink-0">
-                    {activeProject.projectType}
-                  </span>
-
-                  <a
-                    href={activeProject.url}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-xs font-mono text-cyan-400 hover:underline inline-flex items-center gap-1 font-semibold truncate max-w-[240px]"
-                  >
-                    <Globe className="w-3 h-3 shrink-0" />
-                    <span className="truncate">{activeProject.url}</span>
-                    <ExternalLink className="w-3 h-3 shrink-0" />
-                  </a>
-                </div>
-
-                <div className="flex items-center gap-3 text-xs text-slate-400 font-mono whitespace-nowrap">
-                  <span>RAM: <strong className="text-cyan-300">{activeProject.ramFormatted || '0 B'}</strong></span>
-                  <span>Disco: <strong className="text-indigo-300">{activeProject.diskFormatted || '0 B'}</strong></span>
-                  <span>Commit: <strong className="text-amber-300">#{activeProject.lastCommitHash || 'local'}</strong></span>
-                </div>
-              </div>
-
-              {/* Botões do Topo */}
-              <div className="flex items-center gap-2 shrink-0">
-                <button
-                  onClick={() => handleManualRedeploy(activeProject)}
-                  disabled={actionLoading}
-                  className="px-3 py-1.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-xs flex items-center gap-1.5 shadow-lg transition cursor-pointer disabled:opacity-50 whitespace-nowrap"
-                >
-                  <Rocket className="w-3.5 h-3.5 shrink-0" /> Deploy Manual
-                </button>
-
-                <button
-                  onClick={() => setActiveProjectSlug(null)}
-                  className="p-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition cursor-pointer shrink-0"
-                  title="Fechar"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-
-            {/* Abas do Modal */}
-            <div className="flex items-center gap-1.5 px-4 sm:px-5 pt-2.5 border-b border-slate-800 bg-slate-950/40 shrink-0 overflow-x-auto">
-              <button
-                onClick={() => setProjectTab('controls')}
-                className={`px-3 py-2 rounded-t-xl text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer border-b-2 whitespace-nowrap ${
-                  projectTab === 'controls'
-                    ? 'border-cyan-400 text-cyan-300 bg-slate-900'
-                    : 'border-transparent text-slate-400 hover:text-slate-200'
-                }`}
-              >
-                <Settings className="w-3.5 h-3.5 shrink-0" /> Configurações & Ações
-              </button>
-
-              <button
-                onClick={() => setProjectTab('env')}
-                className={`px-3 py-2 rounded-t-xl text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer border-b-2 whitespace-nowrap ${
-                  projectTab === 'env'
-                    ? 'border-cyan-400 text-cyan-300 bg-slate-900'
-                    : 'border-transparent text-slate-400 hover:text-slate-200'
-                }`}
-              >
-                <Key className="w-3.5 h-3.5 text-amber-400 shrink-0" /> Variáveis (.env)
-              </button>
-
-              <button
-                onClick={() => setProjectTab('deployments')}
-                className={`px-3 py-2 rounded-t-xl text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer border-b-2 whitespace-nowrap ${
-                  projectTab === 'deployments'
-                    ? 'border-cyan-400 text-cyan-300 bg-slate-900'
-                    : 'border-transparent text-slate-400 hover:text-slate-200'
-                }`}
-              >
-                <GitCommit className="w-3.5 h-3.5 text-indigo-400 shrink-0" /> Histórico ({activeProject.deploymentsHistory?.length || 0})
-              </button>
-
-              <button
-                onClick={() => setProjectTab('logs')}
-                className={`px-3 py-2 rounded-t-xl text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer border-b-2 whitespace-nowrap ${
-                  projectTab === 'logs'
-                    ? 'border-cyan-400 text-cyan-300 bg-slate-900'
-                    : 'border-transparent text-slate-400 hover:text-slate-200'
-                }`}
-              >
-                <Terminal className="w-3.5 h-3.5 text-emerald-400 shrink-0" /> Logs em Tempo Real
-              </button>
-
-              <button
-                onClick={() => setProjectTab('cron')}
-                className={`px-3 py-2 rounded-t-xl text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer border-b-2 whitespace-nowrap ${
-                  projectTab === 'cron'
-                    ? 'border-cyan-400 text-cyan-300 bg-slate-900'
-                    : 'border-transparent text-slate-400 hover:text-slate-200'
-                }`}
-              >
-                <Clock className="w-3.5 h-3.5 text-cyan-400 shrink-0" /> Cron / Agendamentos
-              </button>
-
-              <button
-                onClick={() => setProjectTab('files')}
-                className={`px-3 py-2 rounded-t-xl text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer border-b-2 whitespace-nowrap ${
-                  projectTab === 'files'
-                    ? 'border-cyan-400 text-cyan-300 bg-slate-900'
-                    : 'border-transparent text-slate-400 hover:text-slate-200'
-                }`}
-              >
-                <FolderGit2 className="w-3.5 h-3.5 text-yellow-400 shrink-0" /> Árvore de Arquivos
-              </button>
-            </div>
-
-            {/* Conteúdo da Aba */}
-            <div className="p-4 sm:p-5 overflow-y-auto space-y-4">
-              {/* ABA 1: CONFIGURAÇÕES & AÇÕES */}
-              {projectTab === 'controls' && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {/* Controles de Execução */}
-                  <div className="bg-slate-950/80 border border-slate-800 rounded-xl p-4 space-y-3.5">
-                    <h3 className="text-xs font-bold uppercase tracking-wider text-cyan-400 flex items-center gap-1.5">
-                      <Play className="w-3.5 h-3.5 shrink-0" /> Controle de Ciclo de Vida
-                    </h3>
-
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <button
-                        onClick={() => handleServiceControl(activeProject.slug, 'restart')}
-                        disabled={actionLoading}
-                        className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs text-slate-200 flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
-                      >
-                        <RotateCcw className="w-3.5 h-3.5 text-cyan-400 shrink-0" /> Reiniciar
-                      </button>
-
-                      {activeProject.status === 'running' ? (
-                        <button
-                          onClick={() => handleServiceControl(activeProject.slug, 'stop')}
-                          disabled={actionLoading}
-                          className="px-3 py-1.5 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 text-xs text-amber-300 flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
-                        >
-                          <Square className="w-3.5 h-3.5 shrink-0" /> Parar
-                        </button>
-                      ) : (
-                        <button
-                          onClick={() => handleServiceControl(activeProject.slug, 'start')}
-                          disabled={actionLoading}
-                          className="px-3 py-1.5 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-xs text-emerald-300 flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
-                        >
-                          <Play className="w-3.5 h-3.5 shrink-0" /> Iniciar
-                        </button>
-                      )}
-
-                      <button
-                        onClick={() => handleDeleteProject(activeProject.slug)}
-                        disabled={actionLoading}
-                        className="px-3 py-1.5 rounded-xl bg-red-500/15 hover:bg-red-500/25 border border-red-500/30 text-xs text-red-300 flex items-center gap-1.5 cursor-pointer ml-auto whitespace-nowrap"
-                      >
-                        <Trash2 className="w-3.5 h-3.5 shrink-0" /> Excluir
-                      </button>
-                    </div>
-
-                    <div className="pt-3 border-t border-slate-800 space-y-3">
-                      <div className="p-2.5 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-between whitespace-nowrap">
-                        <div>
-                          <p className="text-xs font-semibold text-white">Auto-Deploy Contínuo</p>
-                          <p className="text-[10px] text-slate-400">Watcher a cada 60s + Webhook</p>
-                        </div>
-                        <input
-                          type="checkbox"
-                          checked={settingsAutoDeploy}
-                          onChange={(e) => setSettingsAutoDeploy(e.target.checked)}
-                          className="w-4 h-4 accent-cyan-500 cursor-pointer"
-                        />
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-2.5">
-                        <div>
-                          <label className="block text-xs text-slate-400 mb-1">Branch</label>
-                          <input
-                            type="text"
-                            value={settingsBranch}
-                            onChange={(e) => setSettingsBranch(e.target.value)}
-                            className="w-full bg-slate-900 border border-slate-800 rounded-xl px-2.5 py-1.5 text-xs text-white font-mono"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-xs text-slate-400 mb-1">Porta Interna</label>
-                          <input
-                            type="text"
-                            disabled
-                            value={activeProject.port ? `127.0.0.1:${activeProject.port}` : 'Caddy Static'}
-                            className="w-full bg-slate-900/50 border border-slate-800 rounded-xl px-2.5 py-1.5 text-xs text-slate-400 font-mono"
-                          />
-                        </div>
-                      </div>
-
-                      <div className="p-2.5 rounded-xl bg-slate-900 border border-slate-800 space-y-1">
-                        <div className="flex items-center justify-between text-[11px] whitespace-nowrap">
-                          <span className="text-slate-400">Webhook GitHub:</span>
-                          <button
-                            type="button"
-                            onClick={() => copyToClipboard(`https://${baseDomain}/api/webhooks/github/${activeProject.slug}`, 'Webhook')}
-                            className="text-cyan-400 hover:underline flex items-center gap-1 cursor-pointer"
-                          >
-                            <Copy className="w-3 h-3" /> Copiar
-                          </button>
-                        </div>
-                        <p className="text-[10px] font-mono text-slate-300 truncate">
-                          https://{baseDomain}/api/webhooks/github/{activeProject.slug}
-                        </p>
-                      </div>
-
-                      <button
-                        type="button"
-                        onClick={() => handleSaveProjectSettings(activeProject.slug, false)}
-                        disabled={actionLoading}
-                        className="w-full py-2 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-xs cursor-pointer whitespace-nowrap"
-                      >
-                        Salvar Configurações
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Domínio & Endereço HTTPS */}
-                  <div className="bg-slate-950/80 border border-slate-800 rounded-xl p-4 space-y-3.5">
-                    <h3 className="text-xs font-bold uppercase tracking-wider text-cyan-400 flex items-center gap-1.5">
-                      <Globe className="w-3.5 h-3.5 shrink-0" /> Endereço HTTPS & Domínio
-                    </h3>
-
-                    <div>
-                      <label className="block text-xs text-slate-400 mb-1">Subdomínio (.sslip.io)</label>
-                      <div className="flex items-center bg-slate-900 border border-slate-800 rounded-xl overflow-hidden">
-                        <input
-                          type="text"
-                          value={newSlugValue}
-                          onChange={(e) => setNewSlugValue(sanitizeSlug(e.target.value))}
-                          className="w-full bg-transparent px-3 py-1.5 text-xs text-cyan-300 font-mono focus:outline-none min-w-0"
-                        />
-                        <span className="px-2.5 py-1.5 bg-slate-800 text-xs text-slate-400 font-mono border-l border-slate-800 shrink-0 whitespace-nowrap">
-                          .{baseDomain}
-                        </span>
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="block text-xs text-slate-400 mb-1">Domínio Próprio (Opcional)</label>
-                      <input
-                        type="text"
-                        placeholder="Ex: app.meudominio.com.br"
-                        value={newCustomDomainValue}
-                        onChange={(e) => setNewCustomDomainValue(e.target.value)}
-                        className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-1.5 text-xs text-white font-mono"
-                      />
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={() => handleRenameProject(activeProject.slug)}
-                      disabled={actionLoading}
-                      className="w-full py-2 rounded-xl bg-indigo-500 hover:bg-indigo-400 text-slate-950 font-bold text-xs cursor-pointer whitespace-nowrap"
-                    >
-                      Atualizar Endereço HTTPS
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {/* ABA 2: VARIÁVEIS (.ENV) */}
-              {projectTab === 'env' && (
-                <div className="bg-slate-950/80 border border-slate-800 rounded-xl p-4 sm:p-5 space-y-3.5">
-                  <div className="flex flex-wrap items-center justify-between gap-2.5">
-                    <div>
-                      <h3 className="text-xs sm:text-sm font-bold text-white flex items-center gap-1.5">
-                        <Key className="w-4 h-4 text-amber-400 shrink-0" /> Variáveis de Ambiente (.env)
-                      </h3>
-                      <p className="text-[11px] text-slate-400">Injetadas na raiz, em /frontend, /backend e no systemd.</p>
-                    </div>
-
-                    {/* Injetar Banco */}
-                    <div className="flex items-center gap-1.5">
-                      <select
-                        value={injectDbSlug}
-                        onChange={(e) => setInjectDbSlug(e.target.value)}
-                        className="bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-1 text-xs text-slate-200"
-                      >
-                        <option value="">Injetar Banco...</option>
-                        {databases.map(db => (
-                          <option key={db.slug} value={db.slug}>{db.name} ({db.engineLabel})</option>
-                        ))}
-                      </select>
-                      <button
-                        type="button"
-                        disabled={!injectDbSlug || actionLoading}
-                        onClick={() => handleInjectDatabaseIntoProject(injectDbSlug, activeProject.slug)}
-                        className="px-2.5 py-1 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/40 text-emerald-300 text-xs font-semibold cursor-pointer disabled:opacity-40 whitespace-nowrap"
-                      >
-                        + Injetar
-                      </button>
-                    </div>
-                  </div>
-
-                  <textarea
-                    rows={8}
-                    value={envEditorText}
-                    onChange={(e) => setEnvEditorText(e.target.value)}
-                    placeholder={"NODE_ENV=production\nDATABASE_URL=..."}
-                    className="w-full bg-slate-900 border border-slate-800 rounded-xl p-3 text-xs font-mono text-amber-200 focus:outline-none focus:border-cyan-500 leading-relaxed"
-                  />
-
-                  <div className="flex flex-wrap items-center justify-end gap-2.5">
-                    <button
-                      type="button"
-                      onClick={() => handleSaveProjectSettings(activeProject.slug, false)}
-                      disabled={actionLoading}
-                      className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-white cursor-pointer whitespace-nowrap"
-                    >
-                      Salvar Apenas .env
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleSaveProjectSettings(activeProject.slug, true)}
-                      disabled={actionLoading}
-                      className="px-4 py-2 rounded-xl bg-gradient-to-r from-cyan-500 to-indigo-600 text-slate-950 font-bold text-xs flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
-                    >
-                      <Rocket className="w-3.5 h-3.5 shrink-0" /> Salvar .env + Recompilar
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {/* ABA 3: HISTÓRICO DE DEPLOYS */}
-              {projectTab === 'deployments' && (
-                <div className="bg-slate-950/80 border border-slate-800 rounded-xl p-4 sm:p-5 space-y-3">
-                  <div className="flex items-center justify-between whitespace-nowrap">
-                    <h3 className="text-xs sm:text-sm font-bold text-white flex items-center gap-1.5">
-                      <GitCommit className="w-4 h-4 text-indigo-400 shrink-0" /> Histórico de Implantações
-                    </h3>
-                    <span className="text-xs text-slate-400">
-                      {activeProject.deploymentsHistory?.length || 0} deploys
-                    </span>
-                  </div>
-
-                  {(activeProject.deploymentsHistory || []).length === 0 ? (
-                    <p className="text-xs text-slate-500 py-6 text-center">Nenhum deploy registrado ainda.</p>
-                  ) : (
-                    <div className="space-y-2.5">
-                      {activeProject.deploymentsHistory.map((dep) => {
-                        const isExpanded = expandedDeployId === dep.id;
-                        return (
-                          <div key={dep.id} className="rounded-xl bg-slate-900 border border-slate-800 overflow-hidden">
-                            <div
-                              onClick={() => setExpandedDeployId(isExpanded ? null : dep.id)}
-                              className="p-3 flex flex-wrap items-center justify-between gap-2 hover:bg-slate-800/50 transition cursor-pointer"
-                            >
-                              <div className="flex items-center gap-2 flex-wrap min-w-0">
-                                <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase whitespace-nowrap shrink-0 ${
-                                  dep.status === 'success'
-                                    ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
-                                    : 'bg-red-500/15 text-red-400 border border-red-500/30'
-                                }`}>
-                                  {dep.status === 'success' ? 'SUCESSO' : 'FALHOU'}
-                                </span>
-
-                                <span className="font-mono text-xs text-cyan-300 font-semibold shrink-0">
-                                  #{dep.commitHash || 'local'}
-                                </span>
-
-                                <span className="text-xs text-white font-medium truncate max-w-[280px]">
-                                  {dep.commitMessage || 'Deploy'}
-                                </span>
-
-                                <span className="text-[9px] px-1.5 py-0.5 rounded bg-slate-800 text-slate-300 font-mono whitespace-nowrap shrink-0">
-                                  {dep.trigger}
-                                </span>
-                              </div>
-
-                              <div className="flex items-center gap-3 text-[11px] text-slate-400 font-mono whitespace-nowrap shrink-0">
-                                <span>⏱️ {dep.durationSec || dep.durationSeconds || 1}s</span>
-                                <span>📅 {dep.timestamp ? dep.timestamp.split('T')[0] : 'Hoje'}</span>
-                              </div>
-                            </div>
-
-                            {isExpanded && (
-                              <div className="p-3.5 border-t border-slate-800 bg-black/80 text-[10px] font-mono text-emerald-300 whitespace-pre-wrap max-h-64 overflow-y-auto leading-relaxed">
-                                {dep.log || 'Sem log detalhado.'}
-                              </div>
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* ABA 4: LOGS EM TEMPO REAL */}
-              {projectTab === 'logs' && (
-                <div className="bg-slate-950/80 border border-slate-800 rounded-xl p-4 sm:p-5 space-y-3">
-                  <div className="flex items-center justify-between whitespace-nowrap">
-                    <div>
-                      <h3 className="text-xs sm:text-sm font-bold text-white flex items-center gap-1.5">
-                        <Terminal className="w-4 h-4 text-emerald-400 shrink-0" /> Console de Execução (Runtime)
-                      </h3>
-                      <p className="text-[11px] text-slate-400">Saída padrão de stdout/stderr (systemd / caddy)</p>
-                    </div>
-                    <button
-                      onClick={() => fetchProjectRuntimeLogs(activeProject.slug)}
-                      className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs text-cyan-300 flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
-                    >
-                      <RefreshCw className={`w-3.5 h-3.5 shrink-0 ${loadingLogs ? 'animate-spin' : ''}`} /> Atualizar
-                    </button>
-                  </div>
-
-                  <div className="p-3.5 rounded-xl bg-black/90 border border-slate-800 font-mono text-[11px] text-slate-200 whitespace-pre-wrap h-72 overflow-y-auto leading-relaxed">
-                    {loadingLogs ? 'Carregando logs...' : projectLogs}
-                  </div>
-                </div>
-              )}
-
-              {/* ABA 5: CRON / AGENDAMENTOS */}
-              {projectTab === 'cron' && (
-                <div className="bg-slate-950/80 border border-slate-800 rounded-xl p-4 sm:p-5 space-y-4">
-                  <div className="flex flex-wrap items-center justify-between gap-2.5 pb-3 border-b border-slate-800">
-                    <div>
-                      <h3 className="text-xs sm:text-sm font-bold text-white flex items-center gap-1.5">
-                        <Clock className="w-4 h-4 text-cyan-400 shrink-0" /> Agendador de Tarefas Cron
-                      </h3>
-                      <p className="text-[11px] text-slate-400 mt-0.5">
-                        Rotinas em background (PHP, Bash, scripts) com execução isolada no sistema (/etc/cron.d/aco-{activeProject.slug})
-                      </p>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={handleRunCronNow}
-                        disabled={runningCron || !projectCron.command}
-                        className="px-3 py-1.5 rounded-xl bg-cyan-600/20 hover:bg-cyan-600/30 text-cyan-300 border border-cyan-500/40 text-xs font-semibold flex items-center gap-1.5 cursor-pointer disabled:opacity-50 transition"
-                      >
-                        <Play className="w-3.5 h-3.5 shrink-0" /> {runningCron ? 'Executando...' : 'Testar Agora'}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={handleSaveCron}
-                        disabled={savingCron}
-                        className="px-3.5 py-1.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 text-xs font-bold flex items-center gap-1.5 cursor-pointer disabled:opacity-50 transition shadow-lg shadow-cyan-500/20"
-                      >
-                        <Save className="w-3.5 h-3.5 shrink-0" /> {savingCron ? 'Salvando...' : 'Salvar Agendamento'}
-                      </button>
-                    </div>
-                  </div>
-
-                  {cronMsg && (
-                    <div className={`p-2.5 rounded-xl text-xs flex items-center gap-2 ${
-                      cronMsg.type === 'success' ? 'bg-emerald-500/15 border border-emerald-500/30 text-emerald-300' : 'bg-red-500/15 border border-red-500/30 text-red-300'
-                    }`}>
-                      {cronMsg.type === 'success' ? <CheckCircle2 className="w-4 h-4 shrink-0" /> : <AlertTriangle className="w-4 h-4 shrink-0" />}
-                      <span>{cronMsg.text}</span>
-                    </div>
-                  )}
-
-                  {/* Configurações de Cron */}
-                  <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
-                    <div className="md:col-span-5 space-y-3 bg-slate-900/60 p-3.5 rounded-xl border border-slate-800">
-                      <div className="flex items-center justify-between">
-                        <label className="text-xs font-semibold text-slate-300">Status do Agendador</label>
-                        <label className="relative inline-flex items-center cursor-pointer">
-                          <input
-                            type="checkbox"
-                            checked={projectCron.enabled}
-                            onChange={(e) => setProjectCron({ ...projectCron, enabled: e.target.checked })}
-                            className="sr-only peer"
-                          />
-                          <div className="w-9 h-5 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-cyan-500"></div>
-                          <span className="ml-2 text-xs font-medium text-slate-400">
-                            {projectCron.enabled ? 'Ativo' : 'Pausado'}
-                          </span>
-                        </label>
-                      </div>
-
-                      <div>
-                        <label className="block text-xs text-slate-400 mb-1">Expressão Crontab</label>
-                        <input
-                          type="text"
-                          value={projectCron.schedule}
-                          onChange={(e) => setProjectCron({ ...projectCron, schedule: e.target.value })}
-                          placeholder="* * * * *"
-                          className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-1.5 text-xs text-cyan-300 font-mono focus:outline-none focus:border-cyan-500"
-                        />
-                        <div className="flex flex-wrap gap-1 mt-1.5">
-                          <button
-                            type="button"
-                            onClick={() => setProjectCron({ ...projectCron, schedule: '* * * * *' })}
-                            className="text-[10px] px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 font-mono"
-                          >
-                            1 min (* * * * *)
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setProjectCron({ ...projectCron, schedule: '*/5 * * * *' })}
-                            className="text-[10px] px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 font-mono"
-                          >
-                            5 min (*/5 * * * *)
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setProjectCron({ ...projectCron, schedule: '0 * * * *' })}
-                            className="text-[10px] px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 font-mono"
-                          >
-                            1 hora (0 * * * *)
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setProjectCron({ ...projectCron, schedule: '0 0 * * *' })}
-                            className="text-[10px] px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 font-mono"
-                          >
-                            Diário (0 0 * * *)
-                          </button>
-                        </div>
-                      </div>
-
-                      <div>
-                        <label className="block text-xs text-slate-400 mb-1">Comando a Executar</label>
-                        <input
-                          type="text"
-                          value={projectCron.command}
-                          onChange={(e) => setProjectCron({ ...projectCron, command: e.target.value })}
-                          placeholder="php cron.php ou php artisan schedule:run"
-                          className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-1.5 text-xs text-white font-mono focus:outline-none focus:border-cyan-500"
-                        />
-                        <p className="text-[10px] text-slate-500 mt-1">
-                          Executado no diretório: <span className="font-mono text-slate-400">{activeProject.workDir}</span>
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* Visualizador de Logs do Cron */}
-                    <div className="md:col-span-7 bg-slate-950 border border-slate-800 rounded-xl p-3 flex flex-col justify-between">
-                      <div>
-                        <div className="flex items-center justify-between pb-2 border-b border-slate-800/80 mb-2">
-                          <span className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
-                            <Terminal className="w-3.5 h-3.5 text-emerald-400 shrink-0" /> Log de Execuções Recentes
-                          </span>
-                          <span className="text-[10px] font-mono text-slate-500">/var/log/aco-cron/{activeProject.slug}.log</span>
-                        </div>
-                        <pre className="bg-slate-900/90 text-emerald-400 font-mono text-[11px] p-2.5 rounded-lg overflow-x-auto max-h-56 overflow-y-auto leading-relaxed whitespace-pre-wrap">
-                          {loadingCron ? 'Carregando logs do cron...' : projectCron.recentLogs || 'Sem registros de execução ainda.'}
-                        </pre>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* ABA 6: ÁRVORE DE ARQUIVOS (FILE TREE EXPLORER) */}
-              {projectTab === 'files' && (
-                <div className="bg-slate-950/80 border border-slate-800 rounded-xl p-4 sm:p-5 space-y-4">
-                  {/* Barra de Navegação do Caminho */}
-                  <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-800">
-                    <div className="flex items-center gap-2 min-w-0">
-                      <FolderGit2 className="w-4 h-4 text-yellow-400 shrink-0" />
-                      <span className="text-xs font-bold text-white">Navegador de Arquivos:</span>
-                      <div className="flex items-center gap-1 font-mono text-xs text-cyan-300 bg-slate-900 px-2.5 py-1 rounded-lg border border-slate-800 truncate">
-                        <button
-                          type="button"
-                          onClick={() => { setFilesPath(''); setSelectedFile(null); }}
-                          className="hover:text-white hover:underline cursor-pointer"
-                        >
-                          /{activeProject.slug}
-                        </button>
-                        {filesPath && (
-                          <>
-                            <span className="text-slate-500">/</span>
-                            <span className="text-amber-300 truncate">{filesPath}</span>
-                          </>
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-2 shrink-0">
-                      {filesPath && (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const parts = filesPath.split('/');
-                            parts.pop();
-                            setFilesPath(parts.join('/'));
-                            setSelectedFile(null);
-                          }}
-                          className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs text-slate-200 flex items-center gap-1 cursor-pointer"
-                        >
-                          <ArrowLeft className="w-3.5 h-3.5" /> Subir Pasta (..)
-                        </button>
-                      )}
-                      <button
-                        type="button"
-                        onClick={() => fetchProjectFiles(activeProject.slug, filesPath)}
-                        className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white"
-                        title="Atualizar pasta"
-                      >
-                        <RefreshCw className={`w-3.5 h-3.5 ${loadingFiles ? 'animate-spin text-cyan-400' : ''}`} />
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Grid: Lista de Arquivos à Esquerda + Pré-visualização à Direita */}
-                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-                    {/* Lista de Pastas e Arquivos */}
-                    <div className="lg:col-span-5 bg-slate-900/70 border border-slate-800 rounded-xl overflow-hidden flex flex-col h-96">
-                      <div className="p-2.5 bg-slate-950/60 border-b border-slate-800 text-[11px] font-semibold text-slate-400 flex items-center justify-between">
-                        <span>Nome</span>
-                        <span>Tamanho</span>
-                      </div>
-                      <div className="p-1 overflow-y-auto flex-1 space-y-0.5">
-                        {loadingFiles ? (
-                          <div className="p-8 text-center text-xs text-slate-400 flex flex-col items-center gap-2">
-                            <RefreshCw className="w-4 h-4 animate-spin text-cyan-400" />
-                            <span>Lendo diretório...</span>
-                          </div>
-                        ) : filesList.length === 0 ? (
-                          <div className="p-8 text-center text-xs text-slate-500">Esta pasta está vazia.</div>
-                        ) : (
-                          filesList.map((item) => (
-                            <button
-                              key={item.relativePath}
-                              type="button"
-                              onClick={() => {
-                                if (item.isDirectory) {
-                                  setFilesPath(item.relativePath);
-                                  setSelectedFile(null);
-                                } else {
-                                  fetchFileContent(activeProject.slug, item.relativePath);
-                                }
-                              }}
-                              className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs transition cursor-pointer text-left ${
-                                selectedFile?.relativePath === item.relativePath
-                                  ? 'bg-cyan-500/20 text-cyan-300 font-semibold border border-cyan-500/30'
-                                  : 'hover:bg-slate-800/80 text-slate-300'
-                              }`}
-                            >
-                              <div className="flex items-center gap-2 min-w-0">
-                                {item.isDirectory ? (
-                                  <Folder className="w-3.5 h-3.5 text-yellow-400 shrink-0 fill-yellow-400/20" />
-                                ) : item.extension === 'php' ? (
-                                  <FileCode className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
-                                ) : item.name.startsWith('.env') ? (
-                                  <Key className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-                                ) : (
-                                  <FileText className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                                )}
-                                <span className="truncate">{item.name}</span>
-                              </div>
-                              <span className="font-mono text-[10px] text-slate-500 shrink-0 ml-2">
-                                {item.sizeFormatted}
-                              </span>
-                            </button>
-                          ))
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Visualizador de Conteúdo do Arquivo */}
-                    <div className="lg:col-span-7 bg-slate-900/70 border border-slate-800 rounded-xl overflow-hidden flex flex-col h-96">
-                      <div className="p-2.5 bg-slate-950/60 border-b border-slate-800 flex items-center justify-between text-xs">
-                        <div className="flex items-center gap-2 min-w-0">
-                          <Code2 className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
-                          <span className="font-mono text-slate-300 truncate font-semibold">
-                            {selectedFile ? selectedFile.relativePath : 'Nenhum arquivo selecionado'}
-                          </span>
-                          {selectedFile && (
-                            <span className="text-[10px] text-slate-500 font-mono">({selectedFile.sizeFormatted})</span>
-                          )}
-                        </div>
-                        {selectedFile?.content && (
-                          <button
-                            type="button"
-                            onClick={() => copyToClipboard(selectedFile.content, selectedFile.relativePath)}
-                            className="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-[10px] text-cyan-300 flex items-center gap-1 cursor-pointer shrink-0"
-                          >
-                            <Copy className="w-3 h-3" /> Copiar
-                          </button>
-                        )}
-                      </div>
-
-                      <div className="p-3 overflow-y-auto flex-1 font-mono text-xs bg-slate-950 leading-relaxed">
-                        {loadingFileContent ? (
-                          <div className="h-full flex items-center justify-center text-slate-400 gap-2">
-                            <RefreshCw className="w-4 h-4 animate-spin text-cyan-400" />
-                            <span>Carregando arquivo...</span>
-                          </div>
-                        ) : selectedFile ? (
-                          <pre className="text-slate-200 whitespace-pre-wrap selection:bg-cyan-500/30">
-                            {selectedFile.content}
-                          </pre>
-                        ) : (
-                          <div className="h-full flex flex-col items-center justify-center text-slate-500 gap-1.5">
-                            <FileText className="w-6 h-6 stroke-1 text-slate-600" />
-                            <p className="text-xs">Selecione um arquivo à esquerda para visualizar seu código.</p>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

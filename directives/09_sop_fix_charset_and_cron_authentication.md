@@ -22,3 +22,4 @@
 - `execution/labware_full.sql`: Dump limpo em UTF-8 (`utf8mb4_unicode_ci`) sem nenhum mojibake.
 - `execution/fix_labware_data_and_cron.py`: Script Python autônomo para correção de charset no MySQL, no filesystem e configuração do Cron.
 - `execution/fix_labware_charset_and_cron.sh`: Wrapper de execução idempotente para atualização via Git e acionamento no host Ubuntu.
+
