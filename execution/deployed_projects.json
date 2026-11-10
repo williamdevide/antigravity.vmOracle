@@ -1,0 +1,81 @@
+[
+  {
+    "slug": "manu",
+    "name": "Sistema Manu",
+    "customDomain": "",
+    "gitUrl": "https://github.com/williamdevide/antigravity.Manu.git",
+    "repoUrl": "https://github.com/williamdevide/antigravity.Manu.git",
+    "projectType": "fullstack",
+    "branch": "main",
+    "startCommand": "",
+    "domain": "manu.147.15.2.73.sslip.io",
+    "url": "https://manu.147.15.2.73.sslip.io",
+    "port": 4100,
+    "workDir": "/var/www/projects/manu",
+    "autoDeploy": true,
+    "status": "running",
+    "lastCommitShortHash": "main",
+    "lastCommitHash": "main",
+    "lastCommitMessage": "SIG-Manu Full-Stack Online",
+    "lastCommitAuthor": "WilliamDevide",
+    "envVarsText": "",
+    "diskBytes": 85000000,
+    "diskMB": 81.0,
+    "diskFormatted": "81.00 MB",
+    "updatedAt": "2026-11-10T08:12:00-03:00",
+    "lastBuildLog": "[+] Projeto Sistema Manu ativo e integrado ao painel A.C.O.\n[SUCESSO] Frontend e Backend online em https://manu.147.15.2.73.sslip.io",
+    "deploymentsHistory": [
+      {
+        "id": "dep-manu-active",
+        "commitHash": "main",
+        "commitMessage": "SIG-Manu Full-Stack Online",
+        "commitAuthor": "WilliamDevide",
+        "trigger": "reconciliation",
+        "status": "SUCCESS",
+        "timestamp": "2026-11-10T08:12:00-03:00",
+        "durationSeconds": 1.2,
+        "log": "[+] Sistema Manu ativo no Caddy e Systemd."
+      }
+    ]
+  },
+  {
+    "slug": "demo",
+    "name": "Demo Showcase",
+    "customDomain": "",
+    "gitUrl": "https://github.com/antigravity/demo-showcase",
+    "repoUrl": "https://github.com/antigravity/demo-showcase",
+    "projectType": "static",
+    "branch": "main",
+    "startCommand": "",
+    "domain": "demo.147.15.2.73.sslip.io",
+    "url": "https://demo.147.15.2.73.sslip.io",
+    "port": null,
+    "workDir": "/var/www/projects/demo",
+    "autoDeploy": false,
+    "status": "running",
+    "lastCommitShortHash": "initial",
+    "lastCommitHash": "initial",
+    "lastCommitMessage": "Projeto vitrine inicial ativo",
+    "lastCommitAuthor": "Administrador",
+    "envVarsText": "",
+    "diskBytes": 4096,
+    "diskMB": 0.01,
+    "diskFormatted": "4.0 KB",
+    "updatedAt": "2026-11-08T23:05:00-03:00",
+    "lastBuildLog": "[+] Projeto vitrine estático inicializado com sucesso em /var/www/projects/demo\n[SUCESSO] HTTPS ativado em https://demo.147.15.2.73.sslip.io",
+    "deploymentsHistory": [
+      {
+        "id": "dep-init-demo",
+        "commitHash": "initial",
+        "commitMessage": "Deploy inicial ativo",
+        "commitAuthor": "Administrador",
+        "trigger": "initial",
+        "status": "SUCCESS",
+        "timestamp": "2026-11-08T23:05:00-03:00",
+        "durationSeconds": 1.2,
+        "log": "[+] Projeto demo ativo no servidor."
+      }
+    ]
+  }
+]
+

@@ -1,0 +1,2 @@
+[2026-11-08T22:53:17-03:00] Tentativa #1: HTTP 400 (LimitExceeded): The following service limits were exceeded: standard-a1-memory-count, standard-a1-memory-regional-count, standard-a1-core-count, standard-a1-core-regional-count
+[2026-11-08T22:58:13-03:00] Tentativa #2: Sem capacidade fisica de servidores ARM em Sao Paulo (Out of host capacity) para 2 OCPU / 12 GB RAM / 150 GB.

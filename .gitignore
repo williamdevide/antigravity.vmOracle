@@ -1,0 +1,15 @@
+# Credenciais e Chaves de Seguranca (NUNCA versionar)
+.env
+*.key
+*.key.pub
+*.pem
+.oci/
+ippublico.md
+
+# Ambientes Python / Node
+.venv/
+venv/
+__pycache__/
+node_modules/
+dist/
+

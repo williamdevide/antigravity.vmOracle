@@ -1,0 +1,21 @@
+{
+  "state": "IDLE_AFTER_SINGLE_CHECK",
+  "attempts": 2,
+  "targetShape": "VM.Standard.A1.Flex",
+  "ocpus": 2.0,
+  "memoryInGBs": 12.0,
+  "bootVolumeSizeInGBs": 150,
+  "accountLimitNote": "Teto real da conta na OCI: 2 OCPU / 12 GB RAM / 150 GB livres",
+  "availabilityDomain": "ouQk:SA-SAOPAULO-1-AD-1",
+  "imageName": "Canonical-Ubuntu-24.04-aarch64-2026.10.27-0",
+  "capturedInstanceId": null,
+  "lastHttpStatus": 500,
+  "lastErrorCode": "InternalError",
+  "lastMessage": "Sem capacidade fisica de servidores ARM em Sao Paulo (Out of host capacity) para 2 OCPU / 12 GB RAM / 150 GB.",
+  "nextRetrySeconds": 0,
+  "updatedAt": "2026-11-08T22:58:13-03:00",
+  "recentLogs": [
+    "[2026-11-08T22:58:13-03:00] Tentativa #2: Sem capacidade fisica de servidores ARM em Sao Paulo (Out of host capacity) para 2 OCPU / 12 GB RAM / 150 GB.",
+    "[2026-11-08T22:53:17-03:00] Tentativa #1: HTTP 400 (LimitExceeded): The following service limits were exceeded: standard-a1-memory-count, standard-a1-memory-regional-count, standard-a1-core-count, standard-a1-core-regional-count"
+  ]
+}
