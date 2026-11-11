@@ -114,6 +114,7 @@ export default function App() {
   const [slugManuallyEdited, setSlugManuallyEdited] = useState(false);
   const [deploying, setDeploying] = useState(false);
   const [deployResult, setDeployResult] = useState(null);
+  const [successModalData, setSuccessModalData] = useState(null);
 
   // Banco de Dados no Card do Projeto (Aba 'database')
   const [projectSqlScript, setProjectSqlScript] = useState('');
@@ -558,6 +559,8 @@ export default function App() {
       setDeployResult(json);
       if (json.status === 'success' || json.ok) {
         showToastMsg(`Deploy de "${deployForm.name}" concluído!`);
+        setShowNewProjectModal(false);
+        setSuccessModalData(json.project || { name: deployForm.name, slug: deployForm.slug, url: `https://${deployForm.slug}.${baseDomain}` });
         await fetchOverview();
       } else {
         showToastMsg(json.message || 'Erro durante o deploy', 'error');
@@ -1410,6 +1413,73 @@ export default function App() {
                       <span>{cronMsg.text}</span>
                     </div>
                   )}
+
+                  {/* GUIA DE AUTENTICAÇÃO E DIAGNÓSTICO DO CRON */}
+                  {(() => {
+                    const hasTokenError = (projectCron.recentLogs || '').includes('Token inválido') || (projectCron.recentLogs || '').includes('não fornecido');
+                    const detectedCronToken = (activeProject.envVarsText || '').match(/CRON_TOKEN=([^\r\n]+)/)?.[1] || '';
+
+                    return (
+                      <div className={`p-3.5 rounded-xl border text-xs space-y-2.5 transition ${
+                        hasTokenError
+                          ? 'bg-amber-500/10 border-amber-500/30 text-amber-200'
+                          : 'bg-blue-500/10 border-blue-500/20 text-slate-300'
+                      }`}>
+                        <div className="flex items-start gap-2.5">
+                          <AlertTriangle className={`w-4 h-4 shrink-0 mt-0.5 ${hasTokenError ? 'text-amber-400' : 'text-cyan-400'}`} />
+                          <div className="space-y-1">
+                            <p className="font-semibold text-white">
+                              {hasTokenError
+                                ? 'Atenção: O script rejeitou a execução por falta ou erro de Token!'
+                                : 'Como funciona a segurança e passagem de Token nas tarefas Cron:'}
+                            </p>
+                            <p className="text-[11px] leading-relaxed text-slate-300">
+                              Scripts agendados (como rotinas de análise ou envio de e-mails) costumam exigir validação por chave secreta. 
+                              Se o seu script verificar token, adicione o parâmetro no campo <strong>Comando a Executar</strong> abaixo:
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] font-mono pt-1">
+                          <div className="bg-slate-950/80 p-2.5 rounded-lg border border-slate-800 space-y-1">
+                            <span className="text-cyan-400 font-semibold block text-[10px] uppercase">Opção 1: Linha de Comando (CLI / PHP)</span>
+                            <code className="text-slate-200 block truncate">php script.php token=SEU_TOKEN</code>
+                            {detectedCronToken && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const cmd = projectCron.command ? projectCron.command.replace(/\s+token=[^\s]+/, '') : 'php cron_analisar.php';
+                                  setProjectCron({ ...projectCron, command: `${cmd.trim()} token=${detectedCronToken}` });
+                                }}
+                                className="mt-1 text-[10px] px-2 py-0.5 rounded bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 font-sans cursor-pointer transition flex items-center gap-1"
+                              >
+                                <Plus className="w-3 h-3" /> Inserir Token Detectado do .env
+                              </button>
+                            )}
+                          </div>
+
+                          <div className="bg-slate-950/80 p-2.5 rounded-lg border border-slate-800 space-y-1">
+                            <span className="text-emerald-400 font-semibold block text-[10px] uppercase">Opção 2: Requisição HTTP (cURL)</span>
+                            <code className="text-slate-200 block truncate">curl -s "https://{activeProject.domain || `${activeProject.slug}.${baseDomain}`}/cron.php?token=SEU_TOKEN"</code>
+                            <span className="text-slate-500 text-[10px] block font-sans">Ideal se o código PHP lê apenas $_GET['token'].</span>
+                          </div>
+                        </div>
+
+                        {detectedCronToken && (
+                          <div className="flex items-center justify-between text-[11px] pt-1 border-t border-slate-800/60 font-mono text-slate-400">
+                            <span>Chave CRON_TOKEN no .env: <strong className="text-cyan-300">{detectedCronToken}</strong></span>
+                            <button
+                              type="button"
+                              onClick={() => copyToClipboard(detectedCronToken, 'CRON_TOKEN')}
+                              className="text-[10px] px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 cursor-pointer"
+                            >
+                              Copiar Token
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()}
 
                   {/* Configurações de Cron */}
                   <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
@@ -3261,14 +3331,14 @@ export default function App() {
                             </select>
                           </div>
 
-                          <div className="sm:col-span-2">
+                          <div className="sm:col-span-2 min-w-0">
                             <label className="block text-[11px] text-slate-400 mb-1 font-medium">
                               Upload do Arquivo .sql (DDL / DML)
                             </label>
-                            <div className="flex items-center gap-2">
-                              <label className="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-dashed border-slate-700 text-xs font-semibold text-slate-300 cursor-pointer transition">
-                                <Upload className="w-4 h-4 text-indigo-400" />
-                                <span className="truncate">{deployForm.initialSqlFile ? deployForm.initialSqlFile : 'Carregar script .sql do computador'}</span>
+                            <div className="flex items-center gap-2 min-w-0">
+                              <label className="flex-1 min-w-0 flex items-center justify-center gap-2 px-3 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-dashed border-slate-700 text-xs font-semibold text-slate-300 cursor-pointer transition overflow-hidden">
+                                <Upload className="w-4 h-4 text-indigo-400 shrink-0" />
+                                <span className="truncate block max-w-[200px] sm:max-w-[260px]">{deployForm.initialSqlFile ? deployForm.initialSqlFile : 'Carregar script .sql do computador'}</span>
                                 <input
                                   type="file"
                                   accept=".sql,text/plain"
@@ -3295,7 +3365,7 @@ export default function App() {
                                 <button
                                   type="button"
                                   onClick={() => setDeployForm({ ...deployForm, initialSqlFile: '', initialSql: '' })}
-                                  className="p-2 rounded-xl bg-slate-800 hover:bg-red-500/20 text-slate-400 hover:text-red-400 transition"
+                                  className="p-2 rounded-xl bg-slate-800 hover:bg-red-500/20 text-slate-400 hover:text-red-400 transition shrink-0"
                                   title="Limpar arquivo"
                                 >
                                   <X className="w-4 h-4" />
@@ -3399,6 +3469,72 @@ export default function App() {
                   {deployResult.log}
                 </div>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL DE SUCESSO DO DEPLOY */}
+      {successModalData && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-slate-900 border border-emerald-500/40 rounded-2xl max-w-lg w-full p-6 space-y-5 shadow-2xl relative">
+            <button
+              onClick={() => setSuccessModalData(null)}
+              className="absolute top-4 right-4 p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition"
+              title="Fechar"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="flex items-center gap-3">
+              <div className="p-3 rounded-2xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                <CheckCircle2 className="w-8 h-8" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-white">Deploy Realizado com Sucesso!</h3>
+                <p className="text-xs text-slate-400">O projeto foi publicado e já está respondendo na rede.</p>
+              </div>
+            </div>
+
+            <div className="p-4 rounded-xl bg-slate-950/80 border border-slate-800 space-y-3">
+              <div>
+                <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 block mb-1">Nome do Projeto</span>
+                <span className="text-sm font-bold text-white font-mono">{successModalData.name}</span>
+              </div>
+
+              <div>
+                <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 block mb-1">Endereço HTTPS Ativo</span>
+                <a
+                  href={successModalData.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-cyan-400 hover:underline font-mono text-sm font-semibold flex items-center gap-1.5 break-all"
+                >
+                  <Globe className="w-4 h-4 shrink-0" />
+                  <span>{successModalData.url}</span>
+                  <ExternalLink className="w-3.5 h-3.5 shrink-0" />
+                </a>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setSuccessModalData(null)}
+                className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-300 transition cursor-pointer"
+              >
+                Concluir
+              </button>
+
+              <a
+                href={successModalData.url}
+                target="_blank"
+                rel="noreferrer"
+                onClick={() => setSuccessModalData(null)}
+                className="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-bold text-xs flex items-center gap-1.5 transition cursor-pointer shadow-lg shadow-emerald-500/20"
+              >
+                <Rocket className="w-4 h-4" /> Abrir Aplicação
+              </a>
             </div>
           </div>
         </div>
