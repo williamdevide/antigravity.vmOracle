@@ -180,7 +180,12 @@ def save_databases(dbs: list[dict[str, Any]]) -> None:
 def create_database(name: str, engine: str = "sqlite") -> dict[str, Any]:
     """Provisiona um novo banco de dados (sqlite, postgresql, mysql ou redis) na VM."""
     slug = sanitize_db_slug(name)
-    engine = engine.strip().lower()
+    engine = (engine or "mysql").strip().lower()
+    if engine in ("mariadb", "mysql"):
+        engine = "mysql"
+    elif engine in ("postgres", "postgresql"):
+        engine = "postgresql"
+
     dbs = load_databases()
     if any(d.get("slug") == slug for d in dbs):
         raise ValueError(f"Já existe um banco de dados com o identificador '{slug}'.")

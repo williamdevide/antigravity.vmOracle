@@ -3136,28 +3136,6 @@ export default function App() {
                     </div>
 
                     <div>
-                      <label className="block text-xs text-slate-400 mb-1">Subdomínio HTTPS</label>
-                      <div className="flex items-center bg-slate-950 border border-cyan-500/40 rounded-xl overflow-hidden">
-                        <input
-                          type="text"
-                          required
-                          placeholder="meu-app"
-                          value={deployForm.slug}
-                          onChange={(e) => {
-                            setSlugManuallyEdited(true);
-                            setDeployForm({ ...deployForm, slug: sanitizeSlug(e.target.value) });
-                          }}
-                          className="w-full bg-transparent px-3 py-2 text-xs text-cyan-300 font-mono focus:outline-none min-w-0"
-                        />
-                        <span className="px-2.5 py-2 bg-slate-900 text-[10px] text-slate-400 font-mono border-l border-slate-800 shrink-0 whitespace-nowrap">
-                          .{baseDomain}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                    <div className="sm:col-span-2">
                       <label className="block text-xs text-slate-400 mb-1">Arquitetura / Stack</label>
                       <select
                         value={deployForm.projectType}
@@ -3173,6 +3151,41 @@ export default function App() {
                         <option value="static">🌐 Site Estático (HTML / CSS / JS)</option>
                       </select>
                     </div>
+                  </div>
+
+                  {/* Subdomínio HTTPS em Linha Inteira */}
+                  <div>
+                    <label className="block text-xs text-slate-400 mb-1">Subdomínio HTTPS</label>
+                    <div className="flex items-center bg-slate-950 border border-cyan-500/40 rounded-xl overflow-hidden">
+                      <input
+                        type="text"
+                        required
+                        placeholder="meu-app"
+                        value={deployForm.slug}
+                        onChange={(e) => {
+                          setSlugManuallyEdited(true);
+                          setDeployForm({ ...deployForm, slug: sanitizeSlug(e.target.value) });
+                        }}
+                        className="w-full bg-transparent px-3 py-2 text-xs text-cyan-300 font-mono focus:outline-none min-w-0"
+                      />
+                      <span className="px-3 py-2 bg-slate-900 text-xs text-slate-400 font-mono border-l border-slate-800 shrink-0 whitespace-nowrap">
+                        .{baseDomain}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div className="sm:col-span-2">
+                      <label className="block text-xs text-slate-400 mb-1">URL Git do Repositório</label>
+                      <input
+                        type="text"
+                        required
+                        placeholder="https://github.com/usuario/repositorio.git"
+                        value={deployForm.gitUrl}
+                        onChange={(e) => setDeployForm({ ...deployForm, gitUrl: e.target.value })}
+                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white font-mono focus:outline-none focus:border-cyan-500"
+                      />
+                    </div>
 
                     <div>
                       <label className="block text-xs text-slate-400 mb-1">Branch Git</label>
@@ -3185,47 +3198,36 @@ export default function App() {
                     </div>
                   </div>
 
+                  {/* Token Git Pessoal em Linha Inteira */}
                   <div>
-                    <label className="block text-xs text-slate-400 mb-1">URL Git do Repositório</label>
+                    <label className="block text-xs text-slate-400 mb-1">
+                      Token Git Pessoal (Opcional - para repositórios privados de alunos)
+                    </label>
                     <input
-                      type="text"
-                      required
-                      placeholder="https://github.com/usuario/repositorio.git"
-                      value={deployForm.gitUrl}
-                      onChange={(e) => setDeployForm({ ...deployForm, gitUrl: e.target.value })}
+                      type="password"
+                      placeholder="ghp_... (apenas se o repositório for privado)"
+                      value={deployForm.gitToken}
+                      onChange={(e) => setDeployForm({ ...deployForm, gitToken: e.target.value })}
                       className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white font-mono focus:outline-none focus:border-cyan-500"
                     />
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div>
-                      <label className="block text-xs text-slate-400 mb-1">
-                        Token Git Pessoal (Opcional)
-                      </label>
-                      <input
-                        type="password"
-                        placeholder="ghp_... (apenas para repositórios privados)"
-                        value={deployForm.gitToken}
-                        onChange={(e) => setDeployForm({ ...deployForm, gitToken: e.target.value })}
-                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white font-mono focus:outline-none focus:border-cyan-500"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs text-slate-400 mb-1">
-                        Evento Cron Inicial (Opcional)
-                      </label>
-                      <input
-                        type="text"
-                        placeholder="Ex: php cron.php (ou deixe vazio)"
-                        value={deployForm.cronCommand}
-                        onChange={(e) => setDeployForm({ ...deployForm, cronCommand: e.target.value })}
-                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white font-mono focus:outline-none focus:border-cyan-500"
-                      />
-                    </div>
+                  {/* Evento Cron em Linha Inteira */}
+                  <div>
+                    <label className="block text-xs text-slate-400 mb-1">
+                      Evento Cron Inicial (Opcional - comando a ser executado periodicamente)
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Ex: php cron_analisar.php (ou deixe vazio)"
+                      value={deployForm.cronCommand}
+                      onChange={(e) => setDeployForm({ ...deployForm, cronCommand: e.target.value })}
+                      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white font-mono focus:outline-none focus:border-cyan-500"
+                    />
                   </div>
 
                   {/* Seção Banco de Dados 1-Clique na Publicação */}
-                  <div className="p-3 bg-slate-950/80 border border-slate-800 rounded-xl space-y-2.5">
+                  <div className="p-3.5 bg-slate-950/80 border border-slate-800 rounded-xl space-y-3">
                     <div className="flex items-center justify-between">
                       <label className="flex items-center gap-2 cursor-pointer text-xs font-semibold text-white">
                         <input
@@ -3244,46 +3246,80 @@ export default function App() {
                     </div>
 
                     {deployForm.createDatabase && (
-                      <div className="pt-2 border-t border-slate-800 space-y-2.5 animate-in fade-in duration-150">
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                      <div className="pt-2 border-t border-slate-800 space-y-3 animate-in fade-in duration-150">
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                           <div>
-                            <label className="block text-[11px] text-slate-400 mb-1">Motor do Banco</label>
+                            <label className="block text-[11px] text-slate-400 mb-1 font-medium">Motor do Banco</label>
                             <select
                               value={deployForm.databaseEngine}
                               onChange={(e) => setDeployForm({ ...deployForm, databaseEngine: e.target.value })}
-                              className="w-full bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-indigo-500"
+                              className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500"
                             >
-                              <option value="mariadb">🐬 MariaDB / MySQL (Padrão SENAI)</option>
-                              <option value="postgres">🐘 PostgreSQL 16</option>
+                              <option value="mysql">🐬 MariaDB / MySQL (Padrão SENAI)</option>
+                              <option value="postgresql">🐘 PostgreSQL 16</option>
                               <option value="sqlite">📁 SQLite 3</option>
                             </select>
                           </div>
 
-                          <div>
-                            <label className="block text-[11px] text-slate-400 mb-1">Arquivo .sql no Repositório (Opcional)</label>
-                            <input
-                              type="text"
-                              placeholder="Ex: schema.sql ou banco.sql"
-                              value={deployForm.initialSqlFile}
-                              onChange={(e) => setDeployForm({ ...deployForm, initialSqlFile: e.target.value })}
-                              className="w-full bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-white font-mono focus:outline-none focus:border-indigo-500"
-                            />
+                          <div className="sm:col-span-2">
+                            <label className="block text-[11px] text-slate-400 mb-1 font-medium">
+                              Upload do Arquivo .sql (DDL / DML)
+                            </label>
+                            <div className="flex items-center gap-2">
+                              <label className="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-dashed border-slate-700 text-xs font-semibold text-slate-300 cursor-pointer transition">
+                                <Upload className="w-4 h-4 text-indigo-400" />
+                                <span className="truncate">{deployForm.initialSqlFile ? deployForm.initialSqlFile : 'Carregar script .sql do computador'}</span>
+                                <input
+                                  type="file"
+                                  accept=".sql,text/plain"
+                                  className="hidden"
+                                  onChange={(e) => {
+                                    const file = e.target.files?.[0];
+                                    if (file) {
+                                      setDeployForm({ ...deployForm, initialSqlFile: file.name });
+                                      const reader = new FileReader();
+                                      reader.onload = (ev) => {
+                                        setDeployForm(prev => ({
+                                          ...prev,
+                                          initialSqlFile: file.name,
+                                          initialSql: ev.target.result || ''
+                                        }));
+                                        showToastMsg(`Script "${file.name}" carregado no formulário!`);
+                                      };
+                                      reader.readAsText(file);
+                                    }
+                                  }}
+                                />
+                              </label>
+                              {deployForm.initialSqlFile && (
+                                <button
+                                  type="button"
+                                  onClick={() => setDeployForm({ ...deployForm, initialSqlFile: '', initialSql: '' })}
+                                  className="p-2 rounded-xl bg-slate-800 hover:bg-red-500/20 text-slate-400 hover:text-red-400 transition"
+                                  title="Limpar arquivo"
+                                >
+                                  <X className="w-4 h-4" />
+                                </button>
+                              )}
+                            </div>
                           </div>
                         </div>
 
                         <div>
-                          <label className="block text-[11px] text-slate-400 mb-1">Ou Cole os Comandos DDL / DML (Opcional)</label>
+                          <label className="block text-[11px] text-slate-400 mb-1 font-medium">
+                            Comandos DDL / DML (Preenchido via upload ou cole diretamente)
+                          </label>
                           <textarea
-                            rows={2}
-                            placeholder="CREATE TABLE IF NOT EXISTS ..."
+                            rows={6}
+                            placeholder={"-- Cole ou carregue seu script .sql acima\nCREATE TABLE IF NOT EXISTS usuarios (\n  id INT AUTO_INCREMENT PRIMARY KEY,\n  nome VARCHAR(255) NOT NULL\n);"}
                             value={deployForm.initialSql}
                             onChange={(e) => setDeployForm({ ...deployForm, initialSql: e.target.value })}
-                            className="w-full bg-slate-900 border border-slate-800 rounded-lg p-2 text-xs text-emerald-300 font-mono focus:outline-none focus:border-indigo-500"
+                            className="w-full bg-slate-900 border border-slate-800 rounded-xl p-3 text-xs text-emerald-300 font-mono focus:outline-none focus:border-indigo-500 leading-relaxed"
                           />
                         </div>
 
-                        <p className="text-[10px] text-slate-400">
-                          💡 O A.C.O. criará o banco, executará o script SQL e injetará as credenciais completas em <span className="text-amber-300 font-mono">DATABASE_URL</span> no arquivo <span className="text-cyan-300 font-mono">.env</span>.
+                        <p className="text-[11px] text-slate-400">
+                          💡 O A.C.O. criará o banco dedicado na VM, executará o script SQL e injetará as credenciais completas em <span className="text-amber-300 font-mono">DATABASE_URL</span> e variáveis <span className="text-cyan-300 font-mono">DB_*</span> no arquivo <span className="text-cyan-300 font-mono">.env</span>.
                         </p>
                       </div>
                     )}
@@ -3293,7 +3329,7 @@ export default function App() {
                   <div>
                     <div className="flex items-center justify-between mb-1 text-xs">
                       <label className="text-slate-400 flex items-center gap-1.5 whitespace-nowrap">
-                        <Key className="w-3.5 h-3.5 text-amber-400 shrink-0" /> Variáveis (.env)
+                        <Key className="w-3.5 h-3.5 text-amber-400 shrink-0" /> Variáveis de Ambiente (.env)
                       </label>
                       <label className="flex items-center gap-1.5 text-emerald-400 cursor-pointer whitespace-nowrap">
                         <input
@@ -3306,11 +3342,11 @@ export default function App() {
                       </label>
                     </div>
                     <textarea
-                      rows={2}
-                      placeholder={"PORT=8080\nDATABASE_URL=sqlite:////var/lib/aco-databases/meu_db.sqlite"}
+                      rows={5}
+                      placeholder={"PORT=8080\nCHAVE_API=exemplo123\n# Credenciais de banco serao injetadas automaticamente"}
                       value={deployForm.envVarsText}
                       onChange={(e) => setDeployForm({ ...deployForm, envVarsText: e.target.value })}
-                      className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs text-amber-200 font-mono focus:outline-none focus:border-cyan-500"
+                      className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs text-amber-200 font-mono focus:outline-none focus:border-cyan-500 leading-relaxed"
                     />
                   </div>
 

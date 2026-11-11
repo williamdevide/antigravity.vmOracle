@@ -1476,6 +1476,37 @@ if ($isCli && empty($tokenRecebido)) {
         except Exception:
             pass
 
+        # 6. Teste de Smoke / Sanidade HTTP pós-deploy para diagnosticar problemas de runtime
+        try:
+            time.sleep(0.5)
+            smoke_cmd = ["curl", "-k", "-s", "-i", "-m", "5", f"http://127.0.0.1:{port}" if resolved_type not in ("static", "php") else f"https://{domain}"]
+            smoke_res = subprocess.run(smoke_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, errors="replace", timeout=6)
+            smoke_out = smoke_res.stdout
+            status_match = re.search(r"HTTP/[\d\.]+\s+(\d{3})", smoke_out)
+            http_code = int(status_match.group(1)) if status_match else 0
+            
+            if http_code in (500, 502, 503):
+                logs.append(f"\n[⚠️ DIAGNÓSTICO DE RUNTIME HTTP {http_code}]")
+                if "Serviço temporariamente indisponível" in smoke_out:
+                    logs.append("  • Erro Detectado na Aplicação: \"Serviço temporariamente indisponível.\"")
+                    logs.append("  • Causa Provável: A aplicação PHP não conseguiu conectar ao banco de dados MySQL ou faltam variáveis obrigatórias.")
+                    # Inspecionar detalhes de erro
+                    if resolved_type == "php" and os.path.exists(os.path.join(target_dir, "index.php")):
+                        diag_run = subprocess.run(["php", os.path.join(target_dir, "index.php")], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, errors="replace", timeout=5)
+                        diag_msg = (diag_run.stderr + "\n" + diag_run.stdout).strip()
+                        for diag_line in diag_msg.splitlines():
+                            if any(k in diag_line for k in ["Access denied", "Connection refused", "Configuração obrigatória", "Fatal error", "Warning"]):
+                                logs.append(f"  • Detalhe PHP: {diag_line.strip()}")
+                    logs.append("  • Ação Sugerida:")
+                    logs.append("    1. Provisione um banco MariaDB 1-clique para este projeto no card ou na aba Banco de Dados.")
+                    logs.append("    2. Verifique se o seu .env possui DB_HOST, DB_USER, DB_PASS/DB_PASSWORD e DB_NAME apontando para o banco criado.")
+                else:
+                    logs.append(f"  • A aplicação respondeu com status {http_code}. Verifique as variáveis de ambiente e arquivos de log do projeto.")
+            elif http_code == 200:
+                logs.append(f"[+] Verificação de integridade HTTP: 200 OK (Aplicação respondendo com sucesso)")
+        except Exception as se:
+            logs.append(f"[*] Verificação pós-deploy: {se}")
+
         deploy_entry = {
             "id": f"dep-{int(time.time())}",
             "commitHash": commit_meta["shortHash"],

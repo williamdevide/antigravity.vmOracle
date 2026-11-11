@@ -490,6 +490,25 @@ o explorar tabelas deve exibir as tabelas (estruturas e dados) lá na tela de ba
 /agente-orquestrador o cron voltou a dar erro {"error":"Token inv\u00e1lido ou n\u00e3o fornecido","timestamp":"2026-11-10 23:30:01"} e nas tabelas a tabela candidato diz ter 4 registros mas se clico nela não aparece dado nenhum.
 ```
 
+---
+
+## Prompt #53 — 2026-11-10 20:58:45 (-03:00)
+
+```text
+/agente-orquestrador /grill-me /goal aparentemente nossa plataforma agora esta funcional. precisamos testar na pratica. na sequencia eu vou enviar os mesmos arquivos originais da labware mas com outro nome de projeto. quero ver se vai funcionar de primeira ou se vai indicar os erros pertinentes.
+```
+
+---
+
+## Prompt #54 — 2026-11-10 21:07:09 (-03:00)
+
+```text
+/agente-orquestrador /grill-me /goal na tela de novos projetos  o campo subdominio https deve ocupar uma linha inteira, token git e evento cron tambem. em provisionar banco de dados onde vai o nome do arquivo .sql deve ser um campo para upload do arquivo e após o upload ele preenche o conteudo abaixo. no campo comandos ddl / dml e variaveis .env deixe alturas maiores e condizentes. 
+o deploy funcionou, não apresentou qualquer erro, mas a pagina exibe ao ser carregada exibe: Serviço temporariamente indisponível. é importante que os problemas sejam detectados e as correções devidamente sugeridas. não quero que você corrija o erro Serviço temporariamente indisponível, mas que faça ele aparecer durante o processo de deploy e as correções necessarias.
+```
+
+
+
 
 
 
